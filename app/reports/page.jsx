@@ -44,6 +44,7 @@ export default function Reports() {
         <nav className="flex gap-6">
           <Link href="/" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Home</Link>
           <Link href="/dashboard" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Dashboard</Link>
+          <Link href="/credit" className="font-medium hover:text-teal-600 dark:hover:text-teal-300">Credit</Link>
           <Link href="/services" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Services</Link>
           <Link href="/reports" className="font-medium text-purple-600 dark:text-purple-300">Reports</Link>
         </nav>

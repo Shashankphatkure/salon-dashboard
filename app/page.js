@@ -10,7 +10,11 @@ export default function Home() {
         <nav className="flex gap-6">
           <Link href="/" className="font-medium text-purple-600 dark:text-purple-300">Home</Link>
           <Link href="/dashboard" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Dashboard</Link>
+          <Link href="/membership" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Membership</Link>
+          <Link href="/customers" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Customers</Link>
+          <Link href="/credit" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Credit</Link>
           <Link href="/services" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Services</Link>
+          <Link href="/staff" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Staff</Link>
           <Link href="/reports" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Reports</Link>
         </nav>
       </header>
@@ -197,24 +201,152 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Non-Membership Plans Section */}
+        <div className="mt-20 max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+              Non-Membership Credit Plans
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Flexible credit options with 6-month validity. No monthly commitments, just instant value.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Standard Credit Plan */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105">
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-teal-700 dark:text-teal-400">Standard Credit</h3>
+                  <div className="mt-4 flex items-baseline justify-center">
+                    <span className="text-4xl font-extrabold">₹10,000</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Get ₹13,000 worth of services</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">13% instant discount</span> on all services
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">₹3,000 bonus credit</span> added to your account
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">Up to 70%</span> of credit usable per visit
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">6-month validity</span> from date of purchase
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-teal-50 dark:bg-teal-900/30 text-center">
+                <Link href="/credit">
+                  <button className="w-full py-2 px-4 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+                    Select Plan
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Premium Credit Plan */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105 border-2 border-teal-400">
+              <div className="absolute top-0 right-0 bg-teal-500 text-white px-3 py-1 rounded-bl-lg text-sm font-medium">
+                Best Value
+              </div>
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-teal-700 dark:text-teal-400">Premium Credit</h3>
+                  <div className="mt-4 flex items-baseline justify-center">
+                    <span className="text-4xl font-extrabold">₹20,000</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Get ₹26,000 worth of services</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">13% instant discount</span> on all services
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">₹6,000 bonus credit</span> added to your account
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">Up to 30%</span> of credit usable per visit
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">6-month validity</span> from date of purchase
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-teal-50 dark:bg-teal-900/30 text-center">
+                <Link href="/credit">
+                  <button className="w-full py-2 px-4 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+                    Select Plan
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Benefits Explanation */}
         <div className="mt-16 max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">How Membership Works</h3>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">How Our Plans Work</h3>
           
           <div className="space-y-6">
             <div>
-              <h4 className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">Initial Benefits</h4>
+              <h4 className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">Membership Plans</h4>
               <p className="text-gray-600 dark:text-gray-300">
-                When you join, you'll receive an instant discount on your first service (if taken before membership)
-                and credit points added to your account based on your plan.
+                When you join a membership plan, you'll receive an instant discount on your first service (if taken before membership)
+                and credit points added to your account based on your plan level. Each month, bonus points are automatically added to your account.
               </p>
             </div>
             
             <div>
-              <h4 className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">Monthly Rewards</h4>
+              <h4 className="text-lg font-medium text-teal-700 dark:text-teal-400 mb-2">Non-Membership Credit Plans</h4>
               <p className="text-gray-600 dark:text-gray-300">
-                Each month, bonus points are automatically added to your account. Gold members receive 1,000 points,
-                Silver Plus members receive 500 points, and Silver members receive 250 points.
+                Our non-membership credit plans offer flexibility without monthly commitments. Pay once and receive bonus credits instantly
+                with a 6-month validity period. The ₹10,000 plan allows up to 70% usage per visit, while the ₹20,000 plan allows up to 30% per visit,
+                ensuring you can spread your credits across multiple services.
               </p>
             </div>
             
@@ -222,15 +354,19 @@ export default function Home() {
               <h4 className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">Member Limits</h4>
               <p className="text-gray-600 dark:text-gray-300">
                 Gold members can share benefits with unlimited family and friends. Silver Plus members can add up to 5 members,
-                while Silver members can add up to 3 members to their plan.
+                while Silver members can add up to 3 members to their plan. Non-membership credits are for individual use only.
               </p>
             </div>
             
             <div>
               <h4 className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">Example Savings</h4>
               <p className="text-gray-600 dark:text-gray-300">
-                If you're a Gold member with 3,000 points accumulated over 3 months and take a ₹5,000 service,
+                With a Gold membership, if you have 3,000 points accumulated over 3 months and take a ₹5,000 service,
                 you'll use your points and only pay ₹2,000 in cash - that's a significant discount!
+              </p>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
+                With a ₹10,000 non-membership credit plan, you'll get ₹13,000 in credit. If you take a ₹7,000 service, you can use up to 70%
+                of your credit (₹9,100), but you'll only use ₹7,000, leaving ₹6,000 for future visits.
               </p>
             </div>
           </div>

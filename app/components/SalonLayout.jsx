@@ -20,10 +20,34 @@ const SalonLayout = ({ children, currentPage }) => {
             Dashboard
           </Link>
           <Link 
+            href="/membership" 
+            className={`font-medium ${currentPage === 'membership' ? 'text-purple-600 dark:text-purple-300' : 'hover:text-purple-600 dark:hover:text-purple-300'}`}
+          >
+            Membership
+          </Link>
+          <Link 
+            href="/customers" 
+            className={`font-medium ${currentPage === 'customers' ? 'text-purple-600 dark:text-purple-300' : 'hover:text-purple-600 dark:hover:text-purple-300'}`}
+          >
+            Customers
+          </Link>
+          <Link 
+            href="/credit" 
+            className={`font-medium ${currentPage === 'credit' ? 'text-teal-600 dark:text-teal-300' : 'hover:text-teal-600 dark:hover:text-teal-300'}`}
+          >
+            Credit
+          </Link>
+          <Link 
             href="/services" 
             className={`font-medium ${currentPage === 'services' ? 'text-purple-600 dark:text-purple-300' : 'hover:text-purple-600 dark:hover:text-purple-300'}`}
           >
             Services
+          </Link>
+          <Link 
+            href="/staff" 
+            className={`font-medium ${currentPage === 'staff' ? 'text-purple-600 dark:text-purple-300' : 'hover:text-purple-600 dark:hover:text-purple-300'}`}
+          >
+            Staff
           </Link>
           <Link 
             href="/reports" 
