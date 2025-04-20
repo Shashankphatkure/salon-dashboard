@@ -1,5 +1,6 @@
 import ServicesSection from '../components/ServicesSection';
 import Link from 'next/link';
+import Navbar from '../components/Navbar';
 
 export const metadata = {
   title: 'Services - Shashank\'s Salon',
@@ -9,17 +10,8 @@ export const metadata = {
 export default function Services() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      {/* Header */}
-      <header className="p-6 flex items-center justify-between border-b bg-white dark:bg-gray-800 shadow-sm">
-        <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-300">Shashank's Salon</h1>
-        <nav className="flex gap-6">
-          <Link href="/" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Home</Link>
-          <Link href="/dashboard" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Dashboard</Link>
-          <Link href="/credit" className="font-medium hover:text-teal-600 dark:hover:text-teal-300">Credit</Link>
-          <Link href="/services" className="font-medium text-purple-600 dark:text-purple-300">Services</Link>
-          <Link href="/reports" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Reports</Link>
-        </nav>
-      </header>
+      {/* Use the shared Navbar component */}
+      <Navbar />
 
       <div className="container mx-auto py-10 px-4">
         <div className="mb-6 flex justify-between items-center">
