@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../../lib/auth';
 import { getStaffById, getServices } from '../../../lib/db';
-import Image from 'next/image';
 
 export default function StaffDetailsPage({ params }) {
   const { id } = params;
@@ -125,38 +124,23 @@ export default function StaffDetailsPage({ params }) {
           
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
             <div className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* Staff Image */}
-                <div className="flex-shrink-0 flex flex-col items-center">
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 mb-4">
-                    {staff.image_url ? (
-                      <Image
-                        src={staff.image_url}
-                        alt={staff.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className={`px-3 py-1 rounded-full text-sm ${
-                    staff.is_available 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
-                    {staff.is_available ? 'Available' : 'Unavailable'}
-                  </div>
-                </div>
-                
+              <div className="flex flex-col">
                 {/* Staff Info */}
                 <div className="flex-grow">
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{staff.name}</h2>
-                  <p className="text-purple-600 dark:text-purple-400 font-medium mb-6">{staff.role}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{staff.name}</h2>
+                      <p className="text-purple-600 dark:text-purple-400 font-medium">{staff.title || staff.role}</p>
+                    </div>
+                    
+                    <div className={`px-3 py-1 rounded-full text-sm ${
+                      staff.active || staff.is_available 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {staff.active || staff.is_available ? 'Available' : 'Unavailable'}
+                    </div>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-6">
                     <div>
@@ -189,16 +173,16 @@ export default function StaffDetailsPage({ params }) {
                     </div>
                   </div>
                   
-                  {staff.bio && (
+                  {(staff.bio || staff.description) && (
                     <div className="mb-6">
                       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Biography</h3>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{staff.bio}</p>
+                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{staff.bio || staff.description}</p>
                     </div>
                   )}
                   
                   <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={() => router.push(`/staff/edit/${id}`)}
+                      onClick={() => router.push(`/staff/${id}/edit`)}
                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

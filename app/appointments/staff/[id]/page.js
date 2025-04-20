@@ -193,10 +193,10 @@ export default function StaffAppointmentsPage({ params }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {appointment.customer?.name || 'Unknown Customer'}
+                            {appointment.customers?.name || 'Unknown Customer'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {appointment.customer?.phone || ''}
+                            {appointment.customers?.phone || ''}
                           </div>
                         </td>
                         <td className="px-6 py-4">
