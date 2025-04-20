@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "supabase": "^2.20.12",
     "tailwindcss": "^4"
   }
 }
