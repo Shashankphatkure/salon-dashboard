@@ -1,4 +1,10 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../lib/auth';
+import Navbar from '../components/Navbar';
 
 export const metadata = {
   title: 'Reports - Shashank\'s Salon',
@@ -36,20 +42,118 @@ const topServices = [
 ];
 
 export default function Reports() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authorized, setAuthorized] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Check if user has admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/auth/login?redirect=/reports');
+      } else {
+        setLoading(false);
+        // If user is admin, they still need to enter password but we know they have permission
+        if (user.role === 'admin') {
+          setShowPasswordModal(true);
+        } else {
+          // Non-admin users are redirected to home
+          router.push('/');
+        }
+      }
+    }
+  }, [user, authLoading, router]);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    // Simple password check - in a real app, this would be a more secure check
+    if (password === 'admin123') {
+      setAuthorized(true);
+      setShowPasswordModal(false);
+      setError('');
+    } else {
+      setError('Incorrect password. Please try again.');
+    }
+  };
+
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPasswordModal) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
+          <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+            Reports Access
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
+            Enter the admin password to view reports.
+          </p>
+          
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-md mb-4">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handlePasswordSubmit}>
+            <div className="mb-4">
+              <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="password">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Enter admin password"
+                required
+              />
+            </div>
+            <div className="flex justify-between items-center mt-6">
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+              >
+                Access Reports
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    // This shouldn't happen but just in case
+    router.push('/');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      {/* Header */}
-      <header className="p-6 flex items-center justify-between border-b bg-white dark:bg-gray-800 shadow-sm">
-        <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-300">Shashank's Salon</h1>
-        <nav className="flex gap-6">
-          <Link href="/" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Home</Link>
-          <Link href="/dashboard" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Dashboard</Link>
-          <Link href="/credit" className="font-medium hover:text-teal-600 dark:hover:text-teal-300">Credit</Link>
-          <Link href="/services" className="font-medium hover:text-purple-600 dark:hover:text-purple-300">Services</Link>
-          <Link href="/reports" className="font-medium text-purple-600 dark:text-purple-300">Reports</Link>
-        </nav>
-      </header>
-
+      <Navbar />
+      
       <div className="container mx-auto py-10 px-4">
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Salon Reports</h2>
