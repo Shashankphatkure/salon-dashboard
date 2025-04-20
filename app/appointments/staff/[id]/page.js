@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import { useAuth } from '../../../../lib/auth';
-import { getStaffById, getAppointments } from '../../../../lib/db';
+import { getStaffById, getAppointments, checkTableExists } from '../../../../lib/db';
 
 export default function StaffAppointmentsPage({ params }) {
   const { id } = params;
@@ -16,6 +16,7 @@ export default function StaffAppointmentsPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [tableExists, setTableExists] = useState(true);
   
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -39,14 +40,28 @@ export default function StaffAppointmentsPage({ params }) {
         
         setStaff(staffData);
         
-        // Fetch appointments for this staff member
-        const appointmentsData = await getAppointments({ staffId: id });
-        setAppointments(appointmentsData || []);
+        // Check if appointments table exists
+        const appointmentsExist = await checkTableExists('appointments');
+        setTableExists(appointmentsExist);
+        
+        if (appointmentsExist) {
+          try {
+            // Fetch appointments for this staff member
+            const appointmentsData = await getAppointments({ staffId: id });
+            setAppointments(appointmentsData || []);
+          } catch (appointmentError) {
+            console.error('Error fetching appointments:', appointmentError);
+            setAppointments([]); // Set empty array as fallback
+          }
+        } else {
+          // Table doesn't exist
+          setAppointments([]);
+        }
         
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load appointments. Please try again.');
+        setError('Failed to load staff data. Please try again.');
         setLoading(false);
       }
     }
@@ -253,20 +268,32 @@ export default function StaffAppointmentsPage({ params }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No appointments found</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  {filterStatus === 'all' 
-                    ? `${staff.name} doesn't have any appointments yet.` 
-                    : `No ${filterStatus} appointments found for ${staff.name}.`}
-                </p>
-                <button
-                  onClick={() => router.push('/book-appointment')}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg inline-flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Book New Appointment
-                </button>
+                
+                {tableExists ? (
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">
+                    {filterStatus === 'all' 
+                      ? `${staff.name} doesn't have any appointments yet.` 
+                      : `No ${filterStatus} appointments found for ${staff.name}.`}
+                  </p>
+                ) : (
+                  <div className="text-amber-600 dark:text-amber-400 mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg mb-6 mx-auto max-w-md">
+                    <span className="block font-semibold mb-1">Database Setup Required:</span>
+                    The appointments table doesn't exist in the database. 
+                    Please contact the administrator to set up the appointments system.
+                  </div>
+                )}
+                
+                {tableExists && (
+                  <button
+                    onClick={() => router.push('/book-appointment')}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg inline-flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Book New Appointment
+                  </button>
+                )}
               </div>
             )}
           </div>
