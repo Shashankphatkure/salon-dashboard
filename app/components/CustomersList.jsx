@@ -1,82 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const CustomersList = () => {
-  // Mock customer data for demonstration
-  const [customers, setCustomers] = useState([
-    { 
-      id: 1, 
-      name: 'Amit Kumar', 
-      phone: '9876543210', 
-      email: 'amit.kumar@example.com', 
-      birthdate: '1985-05-15',
-      gender: 'Male',
-      address: 'C-45, Sector 15, Noida, UP',
-      joinDate: '2023-10-15',
-      lastVisit: '2024-07-02',
-      membershipType: 'Gold',
-      totalSpent: 45000,
-      visits: 12
-    },
-    { 
-      id: 2, 
-      name: 'Priya Sharma', 
-      phone: '9876543211', 
-      email: 'priya.sharma@example.com', 
-      birthdate: '1990-08-22',
-      gender: 'Female',
-      address: 'A-12, Malviya Nagar, New Delhi',
-      joinDate: '2023-11-05',
-      lastVisit: '2024-06-28',
-      membershipType: 'Silver Plus',
-      totalSpent: 28000,
-      visits: 8
-    },
-    { 
-      id: 3, 
-      name: 'Rajat Verma', 
-      phone: '9876543212', 
-      email: 'rajat.verma@example.com', 
-      birthdate: '1982-03-10',
-      gender: 'Male',
-      address: 'B-78, DLF Phase 2, Gurgaon, Haryana',
-      joinDate: '2024-01-20',
-      lastVisit: '2024-06-15',
-      membershipType: 'Silver',
-      totalSpent: 15000,
-      visits: 5
-    },
-    { 
-      id: 4, 
-      name: 'Neha Singh', 
-      phone: '9876543213', 
-      email: 'neha.singh@example.com', 
-      birthdate: '1988-12-03',
-      gender: 'Female',
-      address: 'D-22, Vasant Kunj, New Delhi',
-      joinDate: '2024-02-10',
-      lastVisit: '2024-07-05',
-      membershipType: 'Credit',
-      totalSpent: 32000,
-      visits: 7
-    },
-    { 
-      id: 5, 
-      name: 'Vikram Malhotra', 
-      phone: '9876543214', 
-      email: 'vikram.malhotra@example.com', 
-      birthdate: '1975-07-18',
-      gender: 'Male',
-      address: 'E-56, Greater Kailash, New Delhi',
-      joinDate: '2023-09-12',
-      lastVisit: '2024-05-20',
-      membershipType: 'None',
-      totalSpent: 8000,
-      visits: 2
-    }
-  ]);
+  const supabase = createClientComponentClient();
+  // Customer state
+  const [customers, setCustomers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // State for modal and form
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,6 +26,44 @@ const CustomersList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+
+  // Fetch customers from Supabase
+  const fetchCustomers = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order(sortBy, { ascending: sortDirection === 'asc' });
+        
+      if (error) throw error;
+      
+      setCustomers(data.map(customer => ({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        birthdate: customer.birthdate,
+        gender: customer.gender,
+        address: customer.address,
+        joinDate: customer.join_date,
+        lastVisit: customer.last_visit,
+        membershipType: customer.membership_type,
+        totalSpent: customer.total_spent,
+        visits: customer.visits
+      })));
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      alert('Error loading customers. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load customers on component mount and sort change
+  useEffect(() => {
+    fetchCustomers();
+  }, [sortBy, sortDirection]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -139,47 +109,90 @@ const CustomersList = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (selectedCustomer) {
-      // Update existing customer
-      setCustomers(customers.map(customer => 
-        customer.id === selectedCustomer.id ? selectedCustomer : customer
-      ));
-      setIsModalOpen(false);
-    } else {
-      // Add new customer
-      const newId = Math.max(...customers.map(c => c.id), 0) + 1;
-      const today = new Date().toISOString().split('T')[0];
-      
-      const newCustomerWithId = {
-        ...newCustomer,
-        id: newId,
-        joinDate: today,
-        lastVisit: today,
-        membershipType: newCustomer.membershipType || 'None',
-        totalSpent: 0,
-        visits: 0
-      };
-      
-      setCustomers([...customers, newCustomerWithId]);
-      setIsModalOpen(false);
-      
-      // Ask if user wants to assign a membership if none is selected
-      if (newCustomer.membershipType === 'None') {
-        const goToMembership = window.confirm('Customer created successfully! Would you like to assign a membership plan now?');
-        if (goToMembership) {
-          window.location.href = `/membership?customer=${newId}`;
+    try {
+      if (selectedCustomer) {
+        // Update existing customer in Supabase
+        const { error } = await supabase
+          .from('customers')
+          .update({
+            name: selectedCustomer.name,
+            phone: selectedCustomer.phone,
+            email: selectedCustomer.email,
+            birthdate: selectedCustomer.birthdate,
+            gender: selectedCustomer.gender,
+            address: selectedCustomer.address,
+            membership_type: selectedCustomer.membershipType,
+            updated_at: new Date()
+          })
+          .eq('id', selectedCustomer.id);
+          
+        if (error) throw error;
+        setIsModalOpen(false);
+        
+      } else {
+        // Add new customer to Supabase
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabase
+          .from('customers')
+          .insert({
+            name: newCustomer.name,
+            phone: newCustomer.phone,
+            email: newCustomer.email,
+            birthdate: newCustomer.birthdate,
+            gender: newCustomer.gender,
+            address: newCustomer.address,
+            membership_type: newCustomer.membershipType || 'None',
+            join_date: today,
+            last_visit: today,
+            total_spent: 0,
+            visits: 0
+          })
+          .select();
+          
+        if (error) throw error;
+        
+        setIsModalOpen(false);
+        
+        // Ask if user wants to assign a membership if none is selected or default
+        if ((newCustomer.membershipType === 'None' || !newCustomer.membershipType) && data && data[0]) {
+          const goToMembership = window.confirm('Customer created successfully! Would you like to assign a membership plan now?');
+          if (goToMembership) {
+            window.location.href = `/membership?customer=${data[0].id}`;
+            return;
+          }
         }
       }
+      
+      // Refresh customer list
+      fetchCustomers();
+      
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      alert('Error saving customer. Please try again.');
     }
   };
 
   // Handle customer deletion
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
-      setCustomers(customers.filter(customer => customer.id !== id));
+      try {
+        const { error } = await supabase
+          .from('customers')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        
+        // Refresh customer list
+        fetchCustomers();
+        
+      } catch (error) {
+        console.error('Error deleting customer:', error);
+        alert('Error deleting customer. Please try again.');
+      }
     }
   };
 
@@ -193,28 +206,14 @@ const CustomersList = () => {
     }
   };
 
-  // Filter and sort customers
+  // Filter customers
   const filteredCustomers = customers
     .filter(customer => 
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone.includes(searchQuery) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.membershipType.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      const valueA = a[sortBy];
-      const valueB = b[sortBy];
-      
-      if (typeof valueA === 'string') {
-        return sortDirection === 'asc' 
-          ? valueA.localeCompare(valueB) 
-          : valueB.localeCompare(valueA);
-      } else {
-        return sortDirection === 'asc' 
-          ? valueA - valueB 
-          : valueB - valueA;
-      }
-    });
+      customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.phone?.includes(searchQuery) ||
+      customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.membershipType?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   // Render sort indicator
   const renderSortIcon = (field) => {
