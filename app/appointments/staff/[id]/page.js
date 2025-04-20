@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import { useAuth } from '../../../../lib/auth';
 import { getStaffById, getAppointments, checkTableExists } from '../../../../lib/db';
 
 export default function StaffAppointmentsPage({ params }) {
-  const { id } = params;
+  // Unwrap the params using React.use()
+  const unwrappedParams = use(params);
+  const id = unwrappedParams.id;
+  
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   

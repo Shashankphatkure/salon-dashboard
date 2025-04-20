@@ -52,13 +52,8 @@ export default function Reports() {
         router.push('/auth/login?redirect=/reports');
       } else {
         setLoading(false);
-        // If user is admin, they still need to enter password but we know they have permission
-        if (user.role === 'admin') {
-          setShowPasswordModal(true);
-        } else {
-          // Non-admin users are redirected to home
-          router.push('/');
-        }
+        // Always show password modal for any authenticated user
+        setShowPasswordModal(true);
       }
     }
   }, [user, authLoading, router]);
