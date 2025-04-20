@@ -16,8 +16,7 @@ const StaffList = () => {
     description: '',
     email: '',
     phone: '',
-    specialties: '',
-    profile_image: ''
+    specialties: ''
   });
   const [error, setError] = useState(null);
 
@@ -70,8 +69,7 @@ const StaffList = () => {
       description: '',
       email: '',
       phone: '',
-      specialties: '',
-      profile_image: ''
+      specialties: ''
     });
     setIsModalOpen(true);
   };
@@ -103,7 +101,6 @@ const StaffList = () => {
             email: selectedStaff.email,
             phone: selectedStaff.phone,
             specialties: specialtiesArray,
-            profile_image: selectedStaff.profile_image,
             updated_at: new Date()
           })
           .eq('id', selectedStaff.id);
@@ -125,8 +122,7 @@ const StaffList = () => {
             description: newStaff.description,
             email: newStaff.email,
             phone: newStaff.phone,
-            specialties: specialtiesArray,
-            profile_image: newStaff.profile_image
+            specialties: specialtiesArray
           });
           
         if (error) throw error;
@@ -219,19 +215,6 @@ const StaffList = () => {
         {staff.length > 0 ? (
           staff.map((staffMember) => (
             <div key={staffMember.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-transform hover:scale-105">
-              <div className="w-full h-64 bg-gray-300 dark:bg-gray-700 relative">
-                {staffMember.profile_image ? (
-                  <img 
-                    src={staffMember.profile_image} 
-                    alt={staffMember.name} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl text-gray-500 dark:text-gray-400">👤</span>
-                  </div>
-                )}
-              </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{staffMember.name}</h3>
                 <p className="text-purple-600 dark:text-purple-400 font-medium mb-3">{staffMember.title}</p>
@@ -368,19 +351,6 @@ const StaffList = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                     placeholder="e.g. Hair Coloring, Styling, Cuts"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Profile Image URL
-                  </label>
-                  <input
-                    type="text"
-                    name="profile_image"
-                    value={selectedStaff ? selectedStaff.profile_image : newStaff.profile_image}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter image URL"
                   />
                 </div>
                 <div className="md:col-span-2">
