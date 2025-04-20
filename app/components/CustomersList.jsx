@@ -356,10 +356,16 @@ const CustomersList = () => {
                       Edit
                     </button>
                     <Link 
-                      href={`/membership/${customer.id}`}
+                      href={`/membership?customer=${customer.id}`}
                       className="text-teal-600 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300 mr-3"
                     >
                       Membership
+                    </Link>
+                    <Link 
+                      href={`/credit?customer=${customer.id}`}
+                      className="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 mr-3"
+                    >
+                      Credits
                     </Link>
                     <button 
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -620,11 +626,18 @@ const CustomersList = () => {
                     Edit Details
                   </button>
                   <Link
-                    href={`/membership/${selectedCustomer.id}`}
+                    href={`/membership?customer=${selectedCustomer.id}`}
                     className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg"
                     onClick={() => setIsViewModalOpen(false)}
                   >
                     Manage Membership
+                  </Link>
+                  <Link
+                    href={`/credit?customer=${selectedCustomer.id}`}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg"
+                    onClick={() => setIsViewModalOpen(false)}
+                  >
+                    View Credits
                   </Link>
                 </div>
               </div>
