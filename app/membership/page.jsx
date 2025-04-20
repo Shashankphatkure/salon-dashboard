@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import SalonLayout from '../components/SalonLayout';
+import PlanUpgrade from '../components/PlanUpgrade';
 
 // Create a component that uses useSearchParams
 function MembershipContent() {
@@ -15,6 +16,7 @@ function MembershipContent() {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(customerId || '');
   const [isLoading, setIsLoading] = useState(true);
+  const [showPlanUpgrade, setShowPlanUpgrade] = useState(false);
   
   // Fetch customers from Supabase
   useEffect(() => {
@@ -123,7 +125,25 @@ function MembershipContent() {
                 Select a customer before choosing a membership plan below
               </p>
             </div>
+            
+            {/* Action buttons */}
+            <div className="mt-4 flex items-center gap-4">
+              <button
+                onClick={() => setShowPlanUpgrade(!showPlanUpgrade)}
+                className="px-4 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-md font-medium flex items-center gap-2"
+              >
+                {showPlanUpgrade ? 'Hide' : 'Show'} Plan Migration Options
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
+          
+          {/* Plan Upgrade section */}
+          {showPlanUpgrade && (
+            <PlanUpgrade customerId={selectedCustomer} />
+          )}
 
           {/* Membership Plans */}
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
