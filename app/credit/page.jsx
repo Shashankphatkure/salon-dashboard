@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import CreditPlanDetails from '../components/CreditPlanDetails';
 import SalonLayout from '../components/SalonLayout';
 import Link from 'next/link';
 
-export default function CreditPlan() {
+// Create a component that uses useSearchParams
+function CreditPlanContent() {
   const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customer');
@@ -72,51 +73,65 @@ export default function CreditPlan() {
   };
 
   return (
+    <>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Credit Plan</h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            {customerData ? 
+              `View credit details for ${customerData.name} (${customerData.membership_type} Plan)` : 
+              'View membership credit details, transactions, and usage limits.'}
+          </p>
+        </div>
+        
+        {!customerId && (
+          <div className="mt-4 sm:mt-0">
+            <Link href="/membership">
+              <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+                Upgrade Membership
+              </button>
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded shadow-md">
+          <p className="font-medium">Error</p>
+          <p>{error}</p>
+          <div className="mt-4">
+            <Link href="/customers">
+              <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+                Select a Customer
+              </button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <CreditPlanDetails 
+          planType={getPlanType()} 
+          customerData={customerData} 
+        />
+      )}
+    </>
+  );
+}
+
+export default function CreditPlan() {
+  return (
     <SalonLayout currentPage="credit">
       <div className="container mx-auto py-10 px-4">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Credit Plan</h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              {customerData ? 
-                `View credit details for ${customerData.name} (${customerData.membership_type} Plan)` : 
-                'View membership credit details, transactions, and usage limits.'}
-            </p>
-          </div>
-          
-          {!customerId && (
-            <div className="mt-4 sm:mt-0">
-              <Link href="/membership">
-                <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
-                  Upgrade Membership
-                </button>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {isLoading ? (
+        <Suspense fallback={
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
           </div>
-        ) : error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded shadow-md">
-            <p className="font-medium">Error</p>
-            <p>{error}</p>
-            <div className="mt-4">
-              <Link href="/customers">
-                <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
-                  Select a Customer
-                </button>
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <CreditPlanDetails 
-            planType={getPlanType()} 
-            customerData={customerData} 
-          />
-        )}
+        }>
+          <CreditPlanContent />
+        </Suspense>
       </div>
     </SalonLayout>
   );
