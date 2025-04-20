@@ -6,6 +6,15 @@ import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import PageTitle from '../components/PageTitle';
 import { useAuth } from '../../lib/auth';
+import { 
+  getAppointments, 
+  getCustomers, 
+  getServices, 
+  getStaff,
+  getUserMembership,
+  getMembershipPlans,
+  getSalesReport 
+} from '../../lib/db';
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -14,6 +23,7 @@ export default function Dashboard() {
   const [memberships, setMemberships] = useState({ total: 0, active: 0 });
   const [customers, setCustomers] = useState({ total: 0, new: 0 });
   const [services, setServices] = useState({ total: 0, booked: 0 });
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -30,34 +40,56 @@ export default function Dashboard() {
       try {
         setLoading(true);
         
-        // In a real application, these would be actual API calls
-        // For now, using sample data
-        setAppointments([
-          {
-            id: 1,
-            date: new Date().toISOString(),
-            start_time: '10:00',
-            customer_name: 'Aishwarya Rai',
-            customer_phone: '+91 98765 43210',
-            services: [{ service: { name: 'Hair Coloring' } }, { service: { name: 'Styling' } }],
-            staff: { name: 'Priya Sharma' },
-            status: 'pending'
-          },
-          {
-            id: 2,
-            date: new Date(Date.now() + 86400000).toISOString(), // tomorrow
-            start_time: '14:30',
-            customer_name: 'Karan Johar',
-            customer_phone: '+91 87654 32109',
-            services: [{ service: { name: 'Hair Cut' } }],
-            staff: { name: 'Raj Malhotra' },
-            status: 'pending'
-          }
-        ]);
+        // Fetch appointments
+        const appointmentsData = await getAppointments({ 
+          status: 'pending',
+          limit: 5
+        });
+        setAppointments(appointmentsData);
         
-        setMemberships({ total: 184, active: 172 });
-        setCustomers({ total: 215, new: 24 });
-        setServices({ total: 28, booked: 136 });
+        // Fetch membership stats
+        const membershipPlans = await getMembershipPlans();
+        const activeMembershipsCount = membershipPlans.reduce((acc, plan) => 
+          acc + (plan.active_count || 0), 0);
+        
+        setMemberships({ 
+          total: membershipPlans.reduce((acc, plan) => acc + (plan.total_count || 0), 0), 
+          active: activeMembershipsCount 
+        });
+        
+        // Fetch customer stats
+        const customersData = await getCustomers();
+        const currentDate = new Date();
+        const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        
+        const newCustomersThisMonth = customersData.filter(customer => 
+          new Date(customer.created_at) >= firstDayOfMonth
+        );
+        
+        setCustomers({ 
+          total: customersData.length, 
+          new: newCustomersThisMonth.length 
+        });
+        
+        // Fetch service stats
+        const servicesData = await getServices();
+        const bookedServices = await getSalesReport(
+          new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString().split('T')[0],
+          new Date().toISOString().split('T')[0]
+        );
+        
+        setServices({ 
+          total: servicesData.length, 
+          booked: bookedServices.reduce((acc, item) => acc + (item.service_count || 0), 0)
+        });
+        
+        // Fetch recent activity
+        const recentAppointments = appointmentsData.slice(0, 3);
+        setRecentActivity(recentAppointments.map(appt => ({
+          type: 'appointment',
+          data: appt,
+          timestamp: new Date(appt.created_at || appt.date)
+        })));
         
         setLoading(false);
       } catch (err) {
@@ -86,6 +118,28 @@ export default function Dashboard() {
     const suffix = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${suffix}`;
+  };
+
+  // Calculate time since for activity
+  const getTimeSince = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
   };
 
   if (authLoading || loading) {
@@ -138,7 +192,9 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center text-sm">
               <span className="text-green-500 font-medium">{memberships.active} active</span>
-              <span className="text-gray-500 dark:text-gray-400 ml-2">({Math.round(memberships.active/memberships.total*100)}%)</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-2">
+                ({memberships.total > 0 ? Math.round(memberships.active/memberships.total*100) : 0}%)
+              </span>
             </div>
           </div>
           
@@ -174,7 +230,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-blue-500 font-medium">{services.booked} appointments</span>
+              <span className="text-blue-500 font-medium">{services.booked} booked this month</span>
             </div>
           </div>
           
@@ -227,18 +283,27 @@ export default function Dashboard() {
                         <div className="text-sm text-gray-500 dark:text-gray-400">{formatTime(appointment.start_time)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.customer_name}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{appointment.customer_phone}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {appointment.customer?.name || appointment.customer_name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {appointment.customer?.phone || appointment.customer_phone}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          {appointment.services?.map((s, i) => (
-                            <span key={i}>{s.service?.name}{i < appointment.services.length - 1 ? ', ' : ''}</span>
+                          {appointment.appointment_services?.map((s, i) => (
+                            <span key={i}>
+                              {s.service?.name || s.service_name}
+                              {i < appointment.appointment_services.length - 1 ? ', ' : ''}
+                            </span>
                           ))}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.staff?.name || 'Not assigned'}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {appointment.staff?.name || appointment.staff_name || 'Not assigned'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
@@ -251,7 +316,10 @@ export default function Dashboard() {
                             View
                           </button>
                         </Link>
-                        <button className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200">
+                        <button 
+                          onClick={() => window.location.href = `/invoice/create?appointment=${appointment.id}`}
+                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
+                        >
                           Complete
                         </button>
                       </td>
@@ -275,8 +343,13 @@ export default function Dashboard() {
         {/* Recent Activity */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Recent Activity</h2>
+          
+          {recentActivity.length > 0 ? (
           <div className="space-y-4">
-            <div className="flex">
+              {recentActivity.map((activity, index) => {
+                if (activity.type === 'appointment') {
+                  return (
+                    <div key={index} className="flex">
               <div className="flex-shrink-0">
                 <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
                   <svg className="h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -285,39 +358,24 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Appointment completed for Deepika Padukone</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Hair Styling, Makeup • 35 minutes ago</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Appointment {activity.data.status === 'completed' ? 'completed for' : 'booked by'} {activity.data.customer?.name || activity.data.customer_name}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {activity.data.appointment_services?.map(s => s.service?.name || s.service_name).join(', ')} • {getTimeSince(activity.timestamp)}
+                        </p>
               </div>
             </div>
-            
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <svg className="h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">New customer registered</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Ranveer Singh • 2 hours ago</p>
-              </div>
+                  );
+                }
+                return null;
+              })}
             </div>
-            
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                  <svg className="h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Silver Plus membership purchased</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Priyanka Chopra • 5 hours ago</p>
-              </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+              <p>No recent activity to display.</p>
             </div>
-          </div>
+          )}
           
           <div className="mt-5 text-center">
             <Link href="/reports">
