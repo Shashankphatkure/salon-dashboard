@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../../components/Navbar';
+import SalonLayout from '../../components/SalonLayout';
 import { useAuth } from '../../../lib/auth';
 import { getStaffById, getServices } from '../../../lib/db';
 
 export default function StaffDetailsPage({ params }) {
-  const { id } = params;
+  // Unwrap the params using React.use()
+  const unwrappedParams = use(params);
+  const id = unwrappedParams.id;
+  
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   
@@ -70,20 +73,18 @@ export default function StaffDetailsPage({ params }) {
   
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="staff">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
   
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="staff">
         <div className="container mx-auto py-20 text-center">
           <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md max-w-xl mx-auto">
             <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h2>
@@ -96,7 +97,7 @@ export default function StaffDetailsPage({ params }) {
             </button>
           </div>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
   
@@ -105,9 +106,7 @@ export default function StaffDetailsPage({ params }) {
   const serviceNames = getServiceNames();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="staff">
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center mb-8">
@@ -182,7 +181,7 @@ export default function StaffDetailsPage({ params }) {
                   
                   <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={() => router.push(`/staff/${id}/edit`)}
+                      onClick={() => router.push(`/staff/edit/${id}`)}
                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -206,6 +205,6 @@ export default function StaffDetailsPage({ params }) {
           </div>
         </div>
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

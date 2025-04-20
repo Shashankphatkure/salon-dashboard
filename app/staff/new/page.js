@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../../components/Navbar';
+import SalonLayout from '../../components/SalonLayout';
 import { useAuth } from '../../../lib/auth';
 import { getServices, createStaff } from '../../../lib/db';
 
@@ -17,7 +17,6 @@ export default function NewStaffPage() {
     role: '',
     bio: '',
     is_available: true,
-    image_url: '',
     services: []
   });
   
@@ -111,20 +110,17 @@ export default function NewStaffPage() {
   
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="staff">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="staff">
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-8">
@@ -217,35 +213,6 @@ export default function NewStaffPage() {
                     <option value="Manager">Manager</option>
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="image_url">
-                    Profile Image URL
-                  </label>
-                  <input
-                    id="image_url"
-                    name="image_url"
-                    type="text"
-                    value={formData.image_url}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    id="is_available"
-                    name="is_available"
-                    type="checkbox"
-                    checked={formData.is_available}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                  />
-                  <label className="ml-2 block text-gray-700 dark:text-gray-300" htmlFor="is_available">
-                    Available for appointments
-                  </label>
-                </div>
               </div>
               
               {/* Right Column */}
@@ -295,6 +262,20 @@ export default function NewStaffPage() {
                     )}
                   </div>
                 </div>
+                
+                <div className="flex items-center">
+                  <input
+                    id="is_available"
+                    name="is_available"
+                    type="checkbox"
+                    checked={formData.is_available}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <label className="ml-2 block text-gray-700 dark:text-gray-300" htmlFor="is_available">
+                    Available for appointments
+                  </label>
+                </div>
               </div>
             </div>
             
@@ -318,6 +299,6 @@ export default function NewStaffPage() {
           </form>
         </div>
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

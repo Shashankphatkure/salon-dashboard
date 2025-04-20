@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../../../components/Navbar';
+import SalonLayout from '../../../components/SalonLayout';
 import { useAuth } from '../../../../lib/auth';
 import { getServices, getStaffById, updateStaff } from '../../../../lib/db';
 
 export default function EditStaffPage({ params }) {
-  const { id } = params;
+  // Unwrap the params using React.use()
+  const unwrappedParams = use(params);
+  const id = unwrappedParams.id;
+  
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   
@@ -18,7 +21,6 @@ export default function EditStaffPage({ params }) {
     role: '',
     bio: '',
     is_available: true,
-    image_url: '',
     services: []
   });
   
@@ -56,7 +58,6 @@ export default function EditStaffPage({ params }) {
           role: staffData.role || '',
           bio: staffData.bio || '',
           is_available: staffData.is_available !== false,
-          image_url: staffData.image_url || '',
           services: staffData.services?.map(service => 
             typeof service === 'object' ? service.id : service
           ) || []
@@ -142,26 +143,23 @@ export default function EditStaffPage({ params }) {
   
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="staff">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="staff">
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-8">
             <button 
               className="mr-4 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
-              onClick={() => router.push('/staff')}
+              onClick={() => router.push(`/staff/${id}`)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -255,21 +253,6 @@ export default function EditStaffPage({ params }) {
                   </select>
                 </div>
                 
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="image_url">
-                    Profile Image URL
-                  </label>
-                  <input
-                    id="image_url"
-                    name="image_url"
-                    type="text"
-                    value={formData.image_url}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                
                 <div className="flex items-center">
                   <input
                     id="is_available"
@@ -355,6 +338,6 @@ export default function EditStaffPage({ params }) {
           </form>
         </div>
       </main>
-    </div>
+    </SalonLayout>
   );
 } 
