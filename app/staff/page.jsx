@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import StaffList from '@/app/components/StaffList';
+import StaffAvailability from '@/app/components/StaffAvailability';
 import PageTitle from '@/app/components/PageTitle';
 import SalonLayout from '@/app/components/SalonLayout';
 
@@ -29,6 +30,16 @@ export default function StaffPage() {
             </div>
           }>
             <StaffList />
+          </Suspense>
+        </div>
+
+        <div className="mt-12 border-t pt-8">
+          <Suspense fallback={
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+            </div>
+          }>
+            <StaffAvailability />
           </Suspense>
         </div>
       </div>
