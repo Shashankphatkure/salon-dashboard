@@ -415,11 +415,11 @@ export default function StaffPage() {
                         <div>
                           <h3 className="text-md font-medium text-gray-800 dark:text-white mb-3">Services</h3>
                           <div className="space-y-2">
-                            {staff.find(s => s.id === selectedStaffId)?.staff_services?.length > 0 ? (
-                              staff.find(s => s.id === selectedStaffId)?.staff_services.map((service, index) => (
+                            {staff.find(s => s.id === selectedStaffId)?.specialties?.length > 0 ? (
+                              staff.find(s => s.id === selectedStaffId)?.specialties.map((specialty, index) => (
                                 <div key={index} className="flex items-center space-x-2">
                                   <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                                  <span className="text-gray-800 dark:text-white">{service.services?.name || 'Unknown Service'}</span>
+                                  <span className="text-gray-800 dark:text-white">{specialty}</span>
                                 </div>
                               ))
                             ) : (
