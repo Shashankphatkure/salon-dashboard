@@ -88,7 +88,8 @@ const CustomersList = () => {
     email: '',
     birthdate: '',
     gender: '',
-    address: ''
+    address: '',
+    membershipType: 'None'
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -119,7 +120,8 @@ const CustomersList = () => {
       email: '',
       birthdate: '',
       gender: '',
-      address: ''
+      address: '',
+      membershipType: 'None'
     });
     setIsModalOpen(true);
   };
@@ -145,26 +147,33 @@ const CustomersList = () => {
       setCustomers(customers.map(customer => 
         customer.id === selectedCustomer.id ? selectedCustomer : customer
       ));
+      setIsModalOpen(false);
     } else {
       // Add new customer
       const newId = Math.max(...customers.map(c => c.id), 0) + 1;
       const today = new Date().toISOString().split('T')[0];
       
-      setCustomers([
-        ...customers,
-        {
-          ...newCustomer,
-          id: newId,
-          joinDate: today,
-          lastVisit: today,
-          membershipType: 'None',
-          totalSpent: 0,
-          visits: 0
+      const newCustomerWithId = {
+        ...newCustomer,
+        id: newId,
+        joinDate: today,
+        lastVisit: today,
+        membershipType: newCustomer.membershipType || 'None',
+        totalSpent: 0,
+        visits: 0
+      };
+      
+      setCustomers([...customers, newCustomerWithId]);
+      setIsModalOpen(false);
+      
+      // Ask if user wants to assign a membership if none is selected
+      if (newCustomer.membershipType === 'None') {
+        const goToMembership = window.confirm('Customer created successfully! Would you like to assign a membership plan now?');
+        if (goToMembership) {
+          window.location.href = `/membership?customer=${newId}`;
         }
-      ]);
+      }
     }
-    
-    setIsModalOpen(false);
   };
 
   // Handle customer deletion
@@ -450,6 +459,23 @@ const CustomersList = () => {
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                     <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Membership
+                  </label>
+                  <select
+                    name="membershipType"
+                    value={selectedCustomer ? selectedCustomer.membershipType : newCustomer.membershipType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="None">No Membership</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Silver Plus">Silver Plus</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Credit">Credit</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">

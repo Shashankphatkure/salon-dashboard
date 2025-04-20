@@ -1,12 +1,42 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SalonLayout from '../components/SalonLayout';
 
-export const metadata = {
-  title: 'Membership Plans - Shashank\'s Salon',
-  description: 'Choose from our premium salon membership plans with exclusive benefits.',
-};
-
 export default function MembershipPlans() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const customerId = searchParams.get('customer');
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(customerId || '');
+  
+  // Mock customer data for demonstration
+  useEffect(() => {
+    // This would be replaced with an API call in a real application
+    setCustomers([
+      { id: 1, name: 'Amit Kumar', membershipType: 'Gold' },
+      { id: 2, name: 'Priya Sharma', membershipType: 'Silver Plus' },
+      { id: 3, name: 'Rajat Verma', membershipType: 'Silver' },
+      { id: 4, name: 'Neha Singh', membershipType: 'Credit' },
+      { id: 5, name: 'Vikram Malhotra', membershipType: 'None' }
+    ]);
+  }, []);
+
+  const handleSelectPlan = (planType) => {
+    if (!selectedCustomer) {
+      alert('Please select a customer first to assign membership');
+      return;
+    }
+    
+    // In a real app, this would make an API call to update the customer's membership
+    alert(`Assigned ${planType} membership to customer ID: ${selectedCustomer}`);
+    
+    // Redirect back to customer page or show confirmation
+    router.push(`/customers?updatedMembership=${selectedCustomer}`);
+  };
+
   return (
     <SalonLayout currentPage="membership">
       <div className="container mx-auto py-10 px-4">
@@ -15,6 +45,28 @@ export default function MembershipPlans() {
           <p className="text-gray-600 dark:text-gray-300">
             Choose the perfect membership plan for exclusive benefits, discounts, and rewards.
           </p>
+          
+          {/* Customer Selection */}
+          <div className="mt-6 max-w-md">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Assign Membership to Customer
+            </label>
+            <select
+              value={selectedCustomer}
+              onChange={(e) => setSelectedCustomer(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Select a customer</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name} {customer.membershipType !== 'None' ? `(Current: ${customer.membershipType})` : '(No membership)'}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Select a customer before choosing a membership plan below
+            </p>
+          </div>
         </div>
 
         {/* Membership Plans */}
@@ -58,7 +110,10 @@ export default function MembershipPlans() {
               </div>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 text-center">
-              <button className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-medium rounded-lg">
+              <button
+                className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-medium rounded-lg"
+                onClick={() => handleSelectPlan('Silver')}
+              >
                 Select Plan
               </button>
             </div>
@@ -114,7 +169,10 @@ export default function MembershipPlans() {
               </div>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 text-center">
-              <button className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg">
+              <button
+                className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg"
+                onClick={() => handleSelectPlan('Silver Plus')}
+              >
                 Select Plan
               </button>
             </div>
@@ -175,7 +233,10 @@ export default function MembershipPlans() {
               </div>
             </div>
             <div className="p-4 bg-amber-100 dark:bg-gray-700 text-center">
-              <button className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg">
+              <button
+                className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg"
+                onClick={() => handleSelectPlan('Gold')}
+              >
                 Select Plan
               </button>
             </div>

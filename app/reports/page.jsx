@@ -6,11 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import Navbar from '../components/Navbar';
 
-export const metadata = {
-  title: 'Reports - Shashank\'s Salon',
-  description: 'Analytics and statistics for salon performance and membership.',
-};
-
 // Mock data for demonstration
 const membershipStats = {
   totalMembers: 184,

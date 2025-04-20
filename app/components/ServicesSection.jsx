@@ -2,52 +2,82 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getServices } from '../../lib/db';
+import { getServices, deleteService } from '../../lib/db';
 
 const ServicesSection = () => {
   const [services, setServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
-    async function fetchServices() {
-      try {
-        const servicesData = await getServices();
-        setServices(servicesData);
-        
-        // Group services by category
-        const groupedServices = servicesData.reduce((acc, service) => {
-          const category = service.category || 'Other';
-          if (!acc[category]) {
-            acc[category] = {
-              id: category,
-              category: category,
-              items: []
-            };
-          }
-          
-          acc[category].items.push({
-            id: service.id,
-            name: service.name,
-            price: service.price || 0,
-            description: service.description || '',
-          });
-          
-          return acc;
-        }, {});
-        
-        setCategories(Object.values(groupedServices));
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching services:', err);
-        setError('Failed to load services. Please try again later.');
-        setLoading(false);
-      }
-    }
-    
     fetchServices();
   }, []);
+
+  async function fetchServices() {
+    try {
+      setLoading(true);
+      const servicesData = await getServices();
+      setServices(servicesData);
+      
+      // Group services by category
+      const groupedServices = servicesData.reduce((acc, service) => {
+        const category = service.category || 'Other';
+        if (!acc[category]) {
+          acc[category] = {
+            id: category,
+            category: category,
+            items: []
+          };
+        }
+        
+        acc[category].items.push({
+          id: service.id,
+          name: service.name,
+          price: service.price || 0,
+          description: service.description || '',
+        });
+        
+        return acc;
+      }, {});
+      
+      setCategories(Object.values(groupedServices));
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError('Failed to load services. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDeleteClick = (service) => {
+    setServiceToDelete(service);
+    setShowDeleteModal(true);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!serviceToDelete) return;
+    
+    setDeleteLoading(true);
+    try {
+      await deleteService(serviceToDelete.id);
+      setShowDeleteModal(false);
+      setServiceToDelete(null);
+      // Refetch services after deletion
+      fetchServices();
+    } catch (err) {
+      console.error('Error deleting service:', err);
+      setDeleteError('Failed to delete service. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -117,6 +147,12 @@ const ServicesSection = () => {
                           Edit
                         </button>
                       </Link>
+                      <button 
+                        onClick={() => handleDeleteClick(service)}
+                        className="px-3 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium rounded-full"
+                      >
+                        Delete
+                      </button>
                       <button className="px-3 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full">
                         Book Now
                       </button>
@@ -137,6 +173,42 @@ const ServicesSection = () => {
           <p>Silver: <span className="font-medium">Up to 20% off</span> on services</p>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 animate-fade-in">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Confirm Delete</h3>
+            
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{serviceToDelete?.name}</span>? This action cannot be undone.
+            </p>
+            
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md text-sm">
+                {deleteError}
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg"
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className={`px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg ${deleteLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
