@@ -22,11 +22,18 @@ export default function Services() {
       </header>
 
       <div className="container mx-auto py-10 px-4">
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Our Services</h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Explore our premium services and exclusive membership benefits.
-          </p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Our Services</h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Explore our premium services and exclusive membership benefits.
+            </p>
+          </div>
+          <Link href="/services/create">
+            <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+              Add New Service
+            </button>
+          </Link>
         </div>
 
         <ServicesSection />

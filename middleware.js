@@ -17,44 +17,32 @@ const adminOnlyPaths = [
   '/reports'
 ];
 
+// Auth related paths that should be excluded from session checks
+const authPaths = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password'
+];
+
+// Temporarily disable auth checks
 export async function middleware(req) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
   
-  // Check if we have a session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
   // Get the pathname from the URL
   const path = req.nextUrl.pathname;
-
-  // Check if the path requires authentication
-  const isProtectedPath = protectedPaths.some(prefix => path.startsWith(prefix));
-  const isAdminPath = adminOnlyPaths.some(prefix => path.startsWith(prefix));
-
-  // If path is protected and no session, redirect to login
-  if (isProtectedPath && !session) {
-    const redirectUrl = new URL('/auth/login', req.url);
-    redirectUrl.searchParams.set('redirect', path);
-    return NextResponse.redirect(redirectUrl);
+  
+  // Redirect home page to dashboard
+  if (path === '/' || path === '') {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
-
-  // For admin paths, check if user has admin role - we'll read this from user metadata
-  if (isAdminPath && session) {
-    const user = session.user;
-    const isAdmin = user.user_metadata?.role === 'admin';
-    
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
-  }
-
+  
   return res;
 }
 
 export const config = {
   matcher: [
+    '/',
     '/dashboard/:path*',
     '/membership/:path*',
     '/customers/:path*',
@@ -62,5 +50,6 @@ export const config = {
     '/services/:path*',
     '/staff/:path*',
     '/reports/:path*',
+    '/auth/:path*',
   ],
 }; 

@@ -1,44 +1,72 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { getServices } from '../../lib/db';
+
 const ServicesSection = () => {
-  // Sample salon services data
-  const services = [
-    {
-      id: 1,
-      category: 'Hair',
-      items: [
-        { id: 101, name: 'Hair Cut & Style', price: 1500, description: 'Precision haircut and styling by our experts' },
-        { id: 102, name: 'Hair Color', price: 4000, description: 'Professional hair coloring with premium products' },
-        { id: 103, name: 'Hair Treatment', price: 3000, description: 'Rejuvenating treatments for damaged hair' },
-        { id: 104, name: 'Blowdry & Styling', price: 1000, description: 'Professional styling for any occasion' },
-      ]
-    },
-    {
-      id: 2, 
-      category: 'Face',
-      items: [
-        { id: 201, name: 'Facial', price: 2500, description: 'Deep cleansing facial with premium products' },
-        { id: 202, name: 'Clean-up', price: 1200, description: 'Quick facial clean-up for refreshed skin' },
-        { id: 203, name: 'Threading', price: 300, description: 'Precise threading for perfectly shaped brows' },
-      ]
-    },
-    {
-      id: 3,
-      category: 'Body',
-      items: [
-        { id: 301, name: 'Full Body Massage', price: 5000, description: '60-minute relaxing massage therapy' },
-        { id: 302, name: 'Manicure', price: 1200, description: 'Luxurious nail care for beautiful hands' },
-        { id: 303, name: 'Pedicure', price: 1500, description: 'Rejuvenating foot care treatment' },
-        { id: 304, name: 'Waxing', price: 2000, description: 'Full body waxing with gentle products' },
-      ]
-    },
-    {
-      id: 4,
-      category: 'Bridal',
-      items: [
-        { id: 401, name: 'Bridal Package', price: 25000, description: 'Complete bridal beauty preparation' },
-        { id: 402, name: 'Pre-Wedding Package', price: 15000, description: 'Series of treatments before the big day' },
-      ]
+  const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const servicesData = await getServices();
+        setServices(servicesData);
+        
+        // Group services by category
+        const groupedServices = servicesData.reduce((acc, service) => {
+          const category = service.category || 'Other';
+          if (!acc[category]) {
+            acc[category] = {
+              id: category,
+              category: category,
+              items: []
+            };
+          }
+          
+          acc[category].items.push({
+            id: service.id,
+            name: service.name,
+            price: service.price || 0,
+            description: service.description || '',
+          });
+          
+          return acc;
+        }, {});
+        
+        setCategories(Object.values(groupedServices));
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError('Failed to load services. Please try again later.');
+        setLoading(false);
+      }
     }
-  ];
+    
+    fetchServices();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-12 text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+        <p className="mt-4 text-gray-600 dark:text-gray-300">Loading services...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-12 text-center">
+        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-12">
@@ -47,41 +75,59 @@ const ServicesSection = () => {
         <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Explore our wide range of premium salon services. Members receive additional benefits and rewards.
         </p>
+        <div className="mt-6">
+          <Link href="/services/create">
+            <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+              Add New Service
+            </button>
+          </Link>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {services.map((category) => (
-          <div key={category.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-6 py-4 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-800">
-              <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">{category.category}</h3>
-            </div>
-            
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {category.items.map((service) => (
-                <div key={service.id} className="px-6 py-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-lg font-medium text-gray-800 dark:text-white">{service.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{service.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-purple-600 dark:text-purple-400">₹{service.price}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {Math.round(service.price * 0.8)} - {Math.round(service.price * 0.5)} for members
+      {categories.length === 0 ? (
+        <div className="text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+          <p className="text-gray-600 dark:text-gray-300">No services available. Add a new service to get started.</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-8">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+              <div className="px-6 py-4 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-800">
+                <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">{category.category}</h3>
+              </div>
+              
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {category.items.map((service) => (
+                  <div key={service.id} className="px-6 py-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-800 dark:text-white">{service.name}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{service.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-purple-600 dark:text-purple-400">₹{service.price}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {Math.round(service.price * 0.8)} - {Math.round(service.price * 0.5)} for members
+                        </div>
                       </div>
                     </div>
+                    <div className="mt-3 flex justify-end space-x-2">
+                      <Link href={`/services/edit/${service.id}`}>
+                        <button className="px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full">
+                          Edit
+                        </button>
+                      </Link>
+                      <button className="px-3 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full">
+                        Book Now
+                      </button>
+                    </div>
                   </div>
-                  <div className="mt-3 flex justify-end">
-                    <button className="px-3 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full">
-                      Book Now
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-12 text-center">
         <div className="inline-block bg-purple-100 dark:bg-purple-900/20 rounded-lg px-6 py-4 text-gray-700 dark:text-gray-300 text-sm">
