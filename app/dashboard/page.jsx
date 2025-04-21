@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [memberships, setMemberships] = useState({ total: 0, active: 0 });
   const [customers, setCustomers] = useState({ total: 0, new: 0 });
   const [services, setServices] = useState({ total: 0, booked: 0 });
+  const [appointmentStats, setAppointmentStats] = useState({ total: 0, pending: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,6 +47,15 @@ export default function Dashboard() {
           limit: 5
         });
         setAppointments(appointmentsData);
+        
+        // Get all appointments for stats
+        const allAppointments = await getAppointments();
+        const pendingAppointments = allAppointments.filter(appt => appt.status === 'pending');
+        
+        setAppointmentStats({
+          total: allAppointments.length,
+          pending: pendingAppointments.length
+        });
         
         // Fetch membership stats
         const membershipPlans = await getMembershipPlans();
@@ -177,6 +187,24 @@ export default function Dashboard() {
         
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Appointments Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <div className="flex items-center mb-3">
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3">
+                <svg className="h-6 w-6 text-green-700 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Appointments</h3>
+                <p className="text-2xl font-bold text-gray-800 dark:text-white">{appointmentStats.total}</p>
+              </div>
+            </div>
+            <div className="flex items-center text-sm">
+              <span className="text-yellow-500 font-medium">{appointmentStats.pending} pending</span>
+            </div>
+          </div>
+          
           {/* Memberships Card */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-center mb-3">
@@ -234,33 +262,12 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <Link href="/book-appointment">
-                <button className="w-full py-2 flex items-center justify-between text-left bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg px-3 text-sm font-medium">
-                  <span>Book Appointment</span>
-                  <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
-              </Link>
-              <Link href="/customers">
-                <button className="w-full py-2 flex items-center justify-between text-left bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg px-3 text-sm font-medium">
-                  <span>Add Customer</span>
-                  <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
-              </Link>
-            </div>
-          </div>
+          
         </div>
         
         {/* Pending Appointments */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Pending Appointments</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Upcoming Appointments</h2>
           
           {appointments.length > 0 ? (
             <div className="overflow-x-auto">
@@ -317,7 +324,7 @@ export default function Dashboard() {
                           </button>
                         </Link>
                         <button 
-                          onClick={() => window.location.href = `/invoice/create?appointment=${appointment.id}`}
+                          onClick={() => window.location.href = `/invoice`}
                           className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
                         >
                           Complete
@@ -327,6 +334,13 @@ export default function Dashboard() {
                   ))}
                 </tbody>
               </table>
+              <div className="mt-5 text-right">
+                <Link href="/invoice">
+                  <button className="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 font-medium">
+                    View All Invoices →
+                  </button>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
