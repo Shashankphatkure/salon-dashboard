@@ -105,7 +105,12 @@ const ServicesSection = () => {
         <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Explore our wide range of premium salon services. Members receive additional benefits and rewards.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex justify-center gap-3">
+          <Link href="/services/categories">
+            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg">
+              Manage Categories
+            </button>
+          </Link>
           <Link href="/services/create">
             <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
               Add New Service
@@ -122,8 +127,13 @@ const ServicesSection = () => {
         <div className="grid md:grid-cols-2 gap-8">
           {categories.map((category) => (
             <div key={category.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-              <div className="px-6 py-4 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-800">
+              <div className="px-6 py-4 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-800 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">{category.category}</h3>
+                <Link href="/services/categories">
+                  <span className="text-xs text-purple-600 dark:text-purple-400 hover:underline cursor-pointer">
+                    Edit Category
+                  </span>
+                </Link>
               </div>
               
               <div className="divide-y divide-gray-200 dark:divide-gray-700">

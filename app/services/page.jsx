@@ -21,11 +21,18 @@ export default function Services() {
               Explore our premium services and exclusive membership benefits.
             </p>
           </div>
-          <Link href="/services/create">
-            <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
-              Add New Service
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/services/categories">
+              <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg">
+                Manage Categories
+              </button>
+            </Link>
+            <Link href="/services/create">
+              <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg">
+                Add New Service
+              </button>
+            </Link>
+          </div>
         </div>
 
         <ServicesSection />

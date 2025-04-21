@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
-import { getServiceById, updateService } from '../../../../lib/db';
+import { getServiceById, updateService, getServices } from '../../../../lib/db';
 
 export default function EditService({ params }) {
   const router = useRouter();
@@ -17,13 +17,15 @@ export default function EditService({ params }) {
     price: '',
     description: ''
   });
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchService() {
+    async function fetchData() {
       try {
+        // Fetch the service details
         const serviceData = await getServiceById(id);
         setService({
           name: serviceData.name || '',
@@ -31,15 +33,24 @@ export default function EditService({ params }) {
           price: serviceData.price || '',
           description: serviceData.description || '',
         });
+        
+        // Fetch categories
+        const servicesData = await getServices();
+        // Extract unique categories
+        const uniqueCategories = Array.from(
+          new Set(servicesData.map(service => service.category || 'Other'))
+        ).sort();
+        
+        setCategories(uniqueCategories);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching service:', err);
-        setError('Failed to load service details.');
+        console.error('Error fetching data:', err);
+        setError('Failed to load data.');
         setLoading(false);
       }
     }
     
-    fetchService();
+    fetchData();
   }, [id]);
 
   const handleChange = (e) => {
@@ -128,24 +139,29 @@ export default function EditService({ params }) {
                 <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category *
                 </label>
-                <select
-                  id="category"
-                  name="category"
-                  value={service.category}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">Select Category</option>
-                  <option value="Hair">Hair</option>
-                  <option value="Face">Face</option>
-                  <option value="Body">Body</option>
-                  <option value="Bridal">Bridal</option>
-                  <option value="Nails">Nails</option>
-                  <option value="Makeup">Makeup</option>
-                  <option value="Spa">Spa</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    id="category"
+                    name="category"
+                    value={service.category}
+                    onChange={handleChange}
+                    required
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  <Link href="/services/categories">
+                    <button 
+                      type="button" 
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg"
+                    >
+                      Manage
+                    </button>
+                  </Link>
+                </div>
               </div>
               
               <div>
