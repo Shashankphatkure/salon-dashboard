@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../../lib/auth';
-import { getServices, getStaff, getStaffAvailability, createAppointment } from '../../lib/db';
+import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers } from '../../lib/db';
 
 export default function BookAppointment() {
   const { user } = useAuth();
@@ -17,6 +17,11 @@ export default function BookAppointment() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [isExistingCustomer, setIsExistingCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -35,9 +40,13 @@ export default function BookAppointment() {
         const staffData = await getStaff();
         setStaff(staffData);
         
+        // Fetch customers list
+        const customersData = await getCustomers();
+        setCustomers(customersData);
+        
         setLoading(false);
       } catch (err) {
-        setError('Failed to load services and staff. Please try again.');
+        setError('Failed to load data. Please try again.');
         setLoading(false);
       }
     }
@@ -75,6 +84,35 @@ export default function BookAppointment() {
       setAppointmentTotal(0);
     }
   }, [selectedServices]);
+
+  // Select customer function
+  const selectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setCustomerName(customer.name);
+    setCustomerPhone(customer.phone);
+    setCustomerEmail(customer.email || '');
+    setShowCustomerSearch(false);
+  };
+
+  // Filter customers based on search query
+  const filteredCustomers = customers.filter(customer => 
+    customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+    customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+    (customer.email && customer.email.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+  );
+
+  // Handle radio button change for customer type
+  const handleCustomerTypeChange = (e) => {
+    const isExisting = e.target.value === 'existing';
+    setIsExistingCustomer(isExisting);
+    if (!isExisting) {
+      // Reset customer data when switching to new customer
+      setSelectedCustomer(null);
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerEmail(user?.email || '');
+    }
+  };
 
   // Handle service selection
   const toggleServiceSelection = (service) => {
@@ -142,15 +180,22 @@ export default function BookAppointment() {
     try {
       setLoading(true);
       
+      // Customer data - either selected existing customer ID or new customer info
+      const customerData = selectedCustomer ? 
+        { customer_id: selectedCustomer.id } : 
+        {
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone
+        };
+      
       // Create appointment objects
       const appointments = [];
       
       // Add current selection if it has all required fields
       if (selectedServices.length > 0 && selectedStaff && selectedTime) {
         appointments.push({
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone,
+          ...customerData,
           date: selectedDate,
           start_time: selectedTime,
           staff_id: selectedStaff.id,
@@ -163,9 +208,7 @@ export default function BookAppointment() {
       // Add all pending appointments
       pendingAppointments.forEach(pending => {
         appointments.push({
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone,
+          ...customerData,
           date: pending.date,
           start_time: pending.time,
           staff_id: pending.staff.id,
@@ -297,44 +340,148 @@ export default function BookAppointment() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Customer Information */}
                   <div>
-                    <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Your Information</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                        <input 
-                          type="text" 
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="Your full name"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                        <input 
-                          type="email" 
-                          value={customerEmail}
-                          onChange={(e) => setCustomerEmail(e.target.value)}
-                          className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="Your email address"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-                        <input 
-                          type="tel" 
-                          value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
-                          className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          placeholder="Your phone number"
-                          required
-                        />
+                    <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Customer Information</h3>
+                    
+                    {/* Customer Type Selection */}
+                    <div className="mb-4">
+                      <div className="flex items-center space-x-6">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="customerType"
+                            value="new"
+                            checked={!isExistingCustomer}
+                            onChange={handleCustomerTypeChange}
+                            className="h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                          />
+                          <span className="ml-2 text-gray-700 dark:text-gray-300">New Customer</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="customerType"
+                            value="existing"
+                            checked={isExistingCustomer}
+                            onChange={handleCustomerTypeChange}
+                            className="h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                          />
+                          <span className="ml-2 text-gray-700 dark:text-gray-300">Existing Customer</span>
+                        </label>
                       </div>
                     </div>
+                    
+                    {isExistingCustomer ? (
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Search Customer</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={customerSearchQuery}
+                              onChange={(e) => {
+                                setCustomerSearchQuery(e.target.value);
+                                setShowCustomerSearch(true);
+                              }}
+                              onClick={() => setShowCustomerSearch(true)}
+                              className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              placeholder="Search by name, phone or email"
+                            />
+                            <svg
+                              className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                          
+                          {/* Customer search results dropdown */}
+                          {showCustomerSearch && (
+                            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 shadow-lg rounded-md max-h-60 overflow-y-auto">
+                              {filteredCustomers.length > 0 ? (
+                                filteredCustomers.map(customer => (
+                                  <div
+                                    key={customer.id}
+                                    className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                                    onClick={() => selectCustomer(customer)}
+                                  >
+                                    <div className="font-medium text-gray-800 dark:text-white">{customer.name}</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {customer.phone}{customer.email ? ` • ${customer.email}` : ''}
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                                  No customers found
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {selectedCustomer && (
+                          <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+                            <div className="font-medium text-gray-800 dark:text-white">{selectedCustomer.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {selectedCustomer.phone}
+                            </div>
+                            {selectedCustomer.email && (
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {selectedCustomer.email}
+                              </div>
+                            )}
+                            {selectedCustomer.membership_type && (
+                              <div className="mt-1">
+                                <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full">
+                                  {selectedCustomer.membership_type}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                          <input 
+                            type="text" 
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Your full name"
+                            required
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                          <input 
+                            type="email" 
+                            value={customerEmail}
+                            onChange={(e) => setCustomerEmail(e.target.value)}
+                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Your email address"
+                            required
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone</label>
+                          <input 
+                            type="tel" 
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Your phone number"
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Date and Service Selection */}
