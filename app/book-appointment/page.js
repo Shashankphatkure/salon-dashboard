@@ -307,7 +307,7 @@ export default function BookAppointment() {
           <div className="max-w-xl mx-auto bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-6 rounded-lg">
             <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Appointment Booked Successfully!</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Thank you for booking with Shashank's Salon. Your appointment(s) have been confirmed.
+              Thank you for booking with Hair & Care Unisex Salon. Your appointment(s) have been confirmed.
             </p>
             <div className="flex gap-4">
               <button 

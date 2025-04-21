@@ -28,7 +28,7 @@ export default function Navbar() {
   return (
     <header className="p-4 md:p-6 flex items-center justify-between border-b bg-white dark:bg-gray-800 shadow-sm relative z-20">
       <Link href="/dashboard">
-        <h1 className="text-xl md:text-2xl font-bold text-purple-800 dark:text-purple-300">Shashank's Salon</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-purple-800 dark:text-purple-300">Hair & Care Unisex Salon</h1>
       </Link>
       
       {/* Desktop menu */}

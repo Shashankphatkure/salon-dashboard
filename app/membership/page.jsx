@@ -163,8 +163,104 @@ function MembershipContent() {
           </div>
 
 {/* Membership Plans */}
-<div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+<div className="grid md:grid-cols-4 gap-8 max-w-7xl mx-auto">
             {/* Non-Membership Plans first */}
+            {/* 10,000 Non-Membership Plan */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-200">Non-Membership</h3>
+                  <div className="mt-4 flex items-baseline justify-center">
+                    <span className="text-4xl font-extrabold">₹10,000</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">30% off</span> on all services
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">No</span> monthly commitment
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">Credit balance</span> of ₹13,000
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 text-center">
+                <button
+                  className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-medium rounded-lg"
+                  onClick={() => handleSelectPlan('Non-Membership-10k')}
+                >
+                  Select Plan
+                </button>
+              </div>
+            </div>
+
+            {/* 20,000 Non-Membership Plan */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-200">Non-Membership</h3>
+                  <div className="mt-4 flex items-baseline justify-center">
+                    <span className="text-4xl font-extrabold">₹20,000</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">38% off</span> on all services
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">No</span> monthly commitment
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-gray-600 dark:text-gray-300">
+                      <span className="font-medium">Credit balance</span> of ₹27,600
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 text-center">
+                <button
+                  className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-medium rounded-lg"
+                  onClick={() => handleSelectPlan('Non-Membership-20k')}
+                >
+                  Select Plan
+                </button>
+              </div>
+            </div>
+
             {/* 30,000 Non-Membership Plan */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
               <div className="p-8">
