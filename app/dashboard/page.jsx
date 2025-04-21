@@ -13,7 +13,8 @@ import {
   getStaff,
   getUserMembership,
   getMembershipPlans,
-  getSalesReport 
+  getSalesReport,
+  updateAppointment 
 } from '../../lib/db';
 
 export default function Dashboard() {
@@ -46,6 +47,27 @@ export default function Dashboard() {
           status: 'pending',
           limit: 5
         });
+        
+        // Ensure we have customer and service data
+        if (appointmentsData && appointmentsData.length > 0) {
+          console.log('Appointments data:', appointmentsData);
+          
+          // Make sure customer data is available
+          appointmentsData.forEach(appointment => {
+            if (!appointment.customer && appointment.customers) {
+              appointment.customer = appointment.customers;
+            }
+            
+            // Ensure services data is accessible
+            if (!appointment.services && appointment.appointment_services) {
+              appointment.services = appointment.appointment_services.map(as => ({
+                ...as,
+                name: as.service?.name || 'Service'
+              }));
+            }
+          });
+        }
+        
         setAppointments(appointmentsData);
         
         // Get all appointments for stats
@@ -150,6 +172,38 @@ export default function Dashboard() {
     
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  };
+
+  // Handle completing an appointment
+  const handleCompleteAppointment = async (appointmentId) => {
+    try {
+      // Show a loading state by setting a loading ID
+      setLoading(true);
+      
+      // Update the appointment status to completed
+      await updateAppointment(appointmentId, { 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      });
+      
+      // Update the appointments list
+      setAppointments(appointments.filter(appt => appt.id !== appointmentId));
+      
+      // Update appointment stats
+      setAppointmentStats(prev => ({
+        ...prev,
+        pending: prev.pending - 1
+      }));
+      
+      // Optionally, redirect to the invoice page
+      window.location.href = `/invoice`;
+      
+    } catch (error) {
+      console.error('Error completing appointment:', error);
+      setError('Failed to complete appointment. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (authLoading || loading) {
@@ -291,20 +345,29 @@ export default function Dashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {appointment.customer?.name || appointment.customer_name}
+                          {appointment.customer?.name || appointment.customers?.name || appointment.customer_name || 'Unknown Customer'}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {appointment.customer?.phone || appointment.customer_phone}
+                          {appointment.customer?.phone || appointment.customers?.phone || appointment.customer_phone || ''}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          {appointment.appointment_services?.map((s, i) => (
-                            <span key={i}>
-                              {s.service?.name || s.service_name}
-                              {i < appointment.appointment_services.length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
+                          {appointment.services ? 
+                            appointment.services.map((s, i) => (
+                              <span key={i}>
+                                {s.name || s.service?.name || 'Service'}
+                                {i < appointment.services.length - 1 ? ', ' : ''}
+                              </span>
+                            )) 
+                          : appointment.appointment_services ? 
+                            appointment.appointment_services.map((s, i) => (
+                              <span key={i}>
+                                {s.service?.name || s.service_name || 'Service'}
+                                {i < appointment.appointment_services.length - 1 ? ', ' : ''}
+                              </span>
+                            ))
+                          : 'No services'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -324,7 +387,7 @@ export default function Dashboard() {
                           </button>
                         </Link>
                         <button 
-                          onClick={() => window.location.href = `/invoice`}
+                          onClick={() => handleCompleteAppointment(appointment.id)}
                           className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
                         >
                           Complete
@@ -354,51 +417,7 @@ export default function Dashboard() {
           )}
         </div>
         
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Recent Activity</h2>
-          
-          {recentActivity.length > 0 ? (
-          <div className="space-y-4">
-              {recentActivity.map((activity, index) => {
-                if (activity.type === 'appointment') {
-                  return (
-                    <div key={index} className="flex">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                  <svg className="h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          Appointment {activity.data.status === 'completed' ? 'completed for' : 'booked by'} {activity.data.customer?.name || activity.data.customer_name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {activity.data.appointment_services?.map(s => s.service?.name || s.service_name).join(', ')} • {getTimeSince(activity.timestamp)}
-                        </p>
-              </div>
-            </div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-              <p>No recent activity to display.</p>
-            </div>
-          )}
-          
-          <div className="mt-5 text-center">
-            <Link href="/reports">
-              <button className="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 font-medium">
-                View All Activity →
-              </button>
-            </Link>
-          </div>
-        </div>
+        
       </main>
     </div>
   );
