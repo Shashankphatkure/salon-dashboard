@@ -9,8 +9,10 @@ export default function InvoicePage() {
   const [error, setError] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     async function fetchAppointments() {
@@ -18,10 +20,8 @@ export default function InvoicePage() {
         setLoading(true);
         console.log('🔍 Fetching appointments...');
         
-        // Get all completed appointments
-        const appointmentsData = await getAppointments({
-          status: 'completed'
-        });
+        // Get all appointments instead of just completed ones
+        const appointmentsData = await getAppointments();
         
         console.log('✅ Appointments fetched:', appointmentsData.length);
         setAppointments(appointmentsData);
@@ -49,13 +49,14 @@ export default function InvoicePage() {
             customer_id: appointment.customer_id,
             date: appointment.date,
             amount: appointment.total_price || 0,
-            status: 'Paid',
+            status: appointment.status === 'completed' ? 'Paid' : 'Pending',
             appointment: appointment,
             customerInfo: customerInfo
           });
         }
         
         setInvoices(processedInvoices);
+        setFilteredInvoices(processedInvoices);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -66,6 +67,17 @@ export default function InvoicePage() {
     
     fetchAppointments();
   }, []);
+  
+  // Apply filter when statusFilter changes
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setFilteredInvoices(invoices);
+    } else {
+      setFilteredInvoices(invoices.filter(invoice => 
+        invoice.status.toLowerCase() === statusFilter.toLowerCase()
+      ));
+    }
+  }, [statusFilter, invoices]);
   
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -276,12 +288,30 @@ export default function InvoicePage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Invoices</h1>
-            <a 
-              href="/book-appointment"
-              className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors"
-            >
-              New Booking
-            </a>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="appearance-none bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 pr-8 rounded-md leading-tight focus:outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-purple-500"
+                >
+                  <option value="all">All Appointments</option>
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
+              <a 
+                href="/book-appointment"
+                className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors"
+              >
+                New Booking
+              </a>
+            </div>
           </div>
           
           {loading ? (
@@ -317,7 +347,7 @@ export default function InvoicePage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {invoices.map((invoice) => (
+                  {filteredInvoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{invoice.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{invoice.customer}</td>
