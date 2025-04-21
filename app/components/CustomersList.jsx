@@ -124,7 +124,6 @@ const CustomersList = () => {
             birthdate: selectedCustomer.birthdate,
             gender: selectedCustomer.gender,
             address: selectedCustomer.address,
-            membership_type: selectedCustomer.membershipType,
             updated_at: new Date()
           })
           .eq('id', selectedCustomer.id);
@@ -466,23 +465,25 @@ const CustomersList = () => {
                     <option value="Prefer not to say">Prefer not to say</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Membership
-                  </label>
-                  <select
-                    name="membershipType"
-                    value={selectedCustomer ? selectedCustomer.membershipType : newCustomer.membershipType}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="None">No Membership</option>
-                    <option value="Silver">Silver</option>
-                    <option value="Silver Plus">Silver Plus</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Credit">Credit</option>
-                  </select>
-                </div>
+                {!selectedCustomer && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Membership
+                    </label>
+                    <select
+                      name="membershipType"
+                      value={newCustomer.membershipType}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="None">No Membership</option>
+                      <option value="Silver">Silver</option>
+                      <option value="Silver Plus">Silver Plus</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Credit">Credit</option>
+                    </select>
+                  </div>
+                )}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Address
