@@ -203,9 +203,10 @@ export default function InvoicePage() {
           <div class="invoice-header">
             <div>
               <div class="invoice-title">Hair & Care Unisex Salon</div>
-              <div>123 Salon Street</div>
-              <div>Indore, MP 452001</div>
-              <div>Phone: +91 12345 67890</div>
+              <div>Shop No 03, Ground floor, Govind Chintamani CHS</div>
+              <div>Plot No.57/4, near Taluka Police Station, Nityanand Nagar</div>
+              <div>HOC Colony, Panvel, Navi Mumbai, Maharashtra 410206</div>
+              <div>Phone: +91 93722 17698</div>
             </div>
             <div>
               <div class="invoice-title">INVOICE</div>
