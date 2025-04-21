@@ -175,7 +175,7 @@ function MembershipContent() {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
-                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Can be claimed at once only</p>
+                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Only 70% of the amount can be claimed at once</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -225,7 +225,7 @@ function MembershipContent() {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
-                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Can be claimed at once only</p>
+                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Only 38% of the amount can be claimed at once</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -275,7 +275,7 @@ function MembershipContent() {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
-                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Can be claimed at once only</p>
+                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Only 45% of the amount can be claimed at once</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -325,7 +325,7 @@ function MembershipContent() {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
-                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Can be claimed at once only</p>
+                  <p className="text-sm text-red-500 dark:text-red-400 mt-1">Only 60% of the amount can be claimed at once</p>
                 </div>
                 
                 <div className="space-y-4">
