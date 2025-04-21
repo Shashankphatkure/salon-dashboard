@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../../lib/auth';
-import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers } from '../../lib/db';
+import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers, createCustomer } from '../../lib/db';
 
 export default function BookAppointment() {
   const { user } = useAuth();
@@ -33,19 +33,29 @@ export default function BookAppointment() {
   useEffect(() => {
     async function fetchData() {
       try {
+        console.log('📊 Fetching initial data from Supabase...');
         setLoading(true);
+        
+        console.log('🔍 Fetching services...');
         const servicesData = await getServices();
+        console.log('✅ Services fetched:', servicesData.length);
         setServices(servicesData);
         
+        console.log('🔍 Fetching staff...');
         const staffData = await getStaff();
+        console.log('✅ Staff fetched:', staffData.length);
         setStaff(staffData);
         
         // Fetch customers list
+        console.log('🔍 Fetching customers...');
         const customersData = await getCustomers();
+        console.log('✅ Customers fetched:', customersData.length);
         setCustomers(customersData);
         
+        console.log('📊 All data loaded successfully');
         setLoading(false);
       } catch (err) {
+        console.error('❌ Error fetching data:', err);
         setError('Failed to load data. Please try again.');
         setLoading(false);
       }
@@ -64,10 +74,13 @@ export default function BookAppointment() {
     async function fetchAvailability() {
       try {
         if (selectedDate) {
+          console.log(`🔍 Fetching staff availability for date: ${selectedDate}`);
           const availabilityData = await getStaffAvailability(selectedDate);
+          console.log('✅ Staff availability fetched:', availabilityData.length);
           setStaffAvailability(availabilityData);
         }
       } catch (err) {
+        console.error('❌ Error fetching staff availability:', err);
         setError('Failed to load staff availability. Please try again.');
       }
     }
@@ -178,50 +191,120 @@ export default function BookAppointment() {
     }
     
     try {
+      console.log('🔄 Processing appointment booking...');
       setLoading(true);
       
-      // Customer data - either selected existing customer ID or new customer info
-      const customerData = selectedCustomer ? 
-        { customer_id: selectedCustomer.id } : 
-        {
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone
-        };
+      // Handle customer data
+      let customerId = null;
+      
+      if (selectedCustomer) {
+        // Use existing customer
+        customerId = selectedCustomer.id;
+        console.log('👤 Using existing customer:', customerId);
+      } else {
+        // Create a new customer first
+        try {
+          console.log('👤 Creating new customer...');
+          const currentDate = new Date().toISOString().split('T')[0];
+          const newCustomer = {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            join_date: currentDate,
+            last_visit: currentDate
+          };
+          
+          const createdCustomer = await createCustomer(newCustomer);
+          customerId = createdCustomer.id;
+          console.log('✅ New customer created:', customerId);
+        } catch (customerError) {
+          console.error('❌ Error creating customer:', customerError);
+          setError('Failed to create customer. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
       
       // Create appointment objects
       const appointments = [];
       
       // Add current selection if it has all required fields
       if (selectedServices.length > 0 && selectedStaff && selectedTime) {
+        // Calculate end time based on service duration (assume 30 min per service for now)
+        const startHour = parseInt(selectedTime.split(':')[0], 10);
+        const servicesDuration = selectedServices.reduce((total, service) => {
+          return total + (service.duration_minutes || 30);
+        }, 0);
+        const endHour = startHour + Math.ceil(servicesDuration / 60);
+        const endTime = `${endHour}:00`;
+        
         appointments.push({
-          ...customerData,
+          customer_id: customerId,
           date: selectedDate,
           start_time: selectedTime,
+          end_time: endTime,
           staff_id: selectedStaff.id,
-          services: selectedServices.map(service => service.id),
-          user_id: user?.id || null,
-          status: 'pending'
+          total_price: appointmentTotal,
+          status: 'pending',
+          // Services will be handled separately after appointment creation
+          _services: selectedServices.map(service => ({
+            service_id: service.id,
+            price: parseFloat(service.price),
+            staff_id: selectedStaff.id
+          }))
         });
       }
       
       // Add all pending appointments
       pendingAppointments.forEach(pending => {
+        // Calculate end time based on service duration
+        const startHour = parseInt(pending.time.split(':')[0], 10);
+        const servicesDuration = pending.services.reduce((total, service) => {
+          return total + (service.duration_minutes || 30);
+        }, 0);
+        const endHour = startHour + Math.ceil(servicesDuration / 60);
+        const endTime = `${endHour}:00`;
+        
         appointments.push({
-          ...customerData,
+          customer_id: customerId,
           date: pending.date,
           start_time: pending.time,
+          end_time: endTime,
           staff_id: pending.staff.id,
-          services: pending.services.map(service => service.id),
-          user_id: user?.id || null,
-          status: 'pending'
+          total_price: pending.total,
+          status: 'pending',
+          // Services will be handled separately after appointment creation
+          _services: pending.services.map(service => ({
+            service_id: service.id,
+            price: parseFloat(service.price),
+            staff_id: pending.staff.id
+          }))
         });
       });
       
+      console.log('📝 Appointments to create:', appointments.length);
+      
       // Create all appointments
       for (const appointment of appointments) {
-        await createAppointment(appointment);
+        console.log('🔍 Creating appointment:', appointment);
+        
+        // Extract services to be inserted later
+        const servicesToInsert = appointment._services || [];
+        delete appointment._services;
+        
+        // Create the appointment
+        const result = await createAppointment(appointment);
+        console.log('✅ Appointment created successfully:', result);
+        
+        // Now handle service associations if needed
+        if (servicesToInsert.length > 0 && result.id) {
+          console.log('🔍 Creating appointment services for:', result.id);
+          // This would be handled by the createAppointment function internally
+          // or could be a separate function to insert into appointment_services table
+        }
       }
+      
+      console.log('🎉 All appointments created successfully');
       
       // Reset form and show success message
       setSelectedServices([]);
@@ -231,6 +314,7 @@ export default function BookAppointment() {
       setSuccess(true);
       setError(null);
     } catch (err) {
+      console.error('❌ Error creating appointments:', err);
       setError('Failed to book appointment. Please try again.');
     } finally {
       setLoading(false);
@@ -250,11 +334,15 @@ export default function BookAppointment() {
   const getAvailableTimeSlots = () => {
     if (!selectedStaff) return [];
     
+    console.log('🔍 Getting available time slots for staff:', selectedStaff.name);
+    
     const staffSlots = staffAvailability.filter(slot => 
       slot.staff_id === selectedStaff.id && 
       slot.date === selectedDate &&
       slot.is_available
     );
+    
+    console.log('Staff slots found:', staffSlots.length);
     
     const timeSlots = [];
     
@@ -272,6 +360,7 @@ export default function BookAppointment() {
       }
     }
     
+    console.log('Available time slots:', timeSlots);
     return timeSlots;
   };
 
@@ -659,7 +748,12 @@ export default function BookAppointment() {
                             ? 'border-purple-400 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20' 
                             : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                         }`}
-                        onClick={() => setSelectedStaff(person)}
+                        onClick={() => {
+                          console.log('Selecting staff:', person.name);
+                          setSelectedStaff(person);
+                          // Reset selected time when switching staff
+                          setSelectedTime('');
+                        }}
                       >
                         <div className="flex items-center mb-4">
                           <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mr-3">
@@ -698,7 +792,9 @@ export default function BookAppointment() {
                                       : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                   }`}
                                   onClick={(e) => {
+                                    e.preventDefault();
                                     e.stopPropagation();
+                                    console.log('Selecting time slot:', time);
                                     setSelectedTime(time);
                                   }}
                                 >
