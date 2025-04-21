@@ -174,6 +174,7 @@ function MembershipContent() {
                     <span className="text-4xl font-extrabold">₹10,000</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -222,6 +223,7 @@ function MembershipContent() {
                     <span className="text-4xl font-extrabold">₹20,000</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -270,6 +272,7 @@ function MembershipContent() {
                     <span className="text-4xl font-extrabold">₹30,000</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -278,7 +281,7 @@ function MembershipContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <p className="ml-3 text-gray-600 dark:text-gray-300">
-                      <span className="font-medium">35% off</span> on all services
+                      <span className="font-medium">45% off</span> on all services
                     </p>
                   </div>
                   <div className="flex items-start">
@@ -318,6 +321,7 @@ function MembershipContent() {
                     <span className="text-4xl font-extrabold">₹50,000</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time payment with premium benefits</p>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">Valid for 6 months</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -326,7 +330,7 @@ function MembershipContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <p className="ml-3 text-gray-600 dark:text-gray-300">
-                      <span className="font-medium">50% off</span> on all services
+                      <span className="font-medium">60% off</span> on all services
                     </p>
                   </div>
                   <div className="flex items-start">
