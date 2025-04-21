@@ -28,6 +28,8 @@ export default function BookAppointment() {
   const [pendingAppointments, setPendingAppointments] = useState([]);
   const [appointmentTotal, setAppointmentTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [appointmentResults, setAppointmentResults] = useState([]);
+  const [appointmentCustomer, setAppointmentCustomer] = useState(null);
 
   // Fetch services and staff on component mount
   useEffect(() => {
@@ -196,10 +198,12 @@ export default function BookAppointment() {
       
       // Handle customer data
       let customerId = null;
+      let customerInfo = null;
       
       if (selectedCustomer) {
         // Use existing customer
         customerId = selectedCustomer.id;
+        customerInfo = selectedCustomer;
         console.log('👤 Using existing customer:', customerId);
       } else {
         // Create a new customer first
@@ -216,6 +220,7 @@ export default function BookAppointment() {
           
           const createdCustomer = await createCustomer(newCustomer);
           customerId = createdCustomer.id;
+          customerInfo = createdCustomer;
           console.log('✅ New customer created:', customerId);
         } catch (customerError) {
           console.error('❌ Error creating customer:', customerError);
@@ -224,6 +229,9 @@ export default function BookAppointment() {
           return;
         }
       }
+      
+      // Save customer for the invoice
+      setAppointmentCustomer(customerInfo);
       
       // Create appointment objects
       const appointments = [];
@@ -285,6 +293,7 @@ export default function BookAppointment() {
       console.log('📝 Appointments to create:', appointments.length);
       
       // Create all appointments
+      const createdAppointments = [];
       for (const appointment of appointments) {
         console.log('🔍 Creating appointment:', appointment);
         
@@ -296,6 +305,20 @@ export default function BookAppointment() {
         const result = await createAppointment(appointment);
         console.log('✅ Appointment created successfully:', result);
         
+        // Store the created appointment with its services for the invoice
+        createdAppointments.push({
+          ...result,
+          services: servicesToInsert.map(service => {
+            const fullService = services.find(s => s.id === service.service_id);
+            return {
+              ...service,
+              name: fullService?.name || 'Service',
+              duration_minutes: fullService?.duration_minutes || 30
+            };
+          }),
+          staff: staff.find(s => s.id === result.staff_id) || { name: 'Staff' }
+        });
+        
         // Now handle service associations if needed
         if (servicesToInsert.length > 0 && result.id) {
           console.log('🔍 Creating appointment services for:', result.id);
@@ -303,6 +326,9 @@ export default function BookAppointment() {
           // or could be a separate function to insert into appointment_services table
         }
       }
+      
+      // Save appointment results for the invoice
+      setAppointmentResults(createdAppointments);
       
       console.log('🎉 All appointments created successfully');
       
@@ -380,6 +406,176 @@ export default function BookAppointment() {
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handle print invoice
+  const handlePrintInvoice = () => {
+    // Open a new window for the invoice
+    const invoiceWindow = window.open('', '_blank');
+    
+    if (!invoiceWindow) {
+      alert('Please allow popups to print the invoice');
+      return;
+    }
+    
+    // Format the current date
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    // Calculate the invoice total
+    const invoiceTotal = appointmentResults.reduce((total, appointment) => {
+      return total + (appointment.total_price || 0);
+    }, 0);
+    
+    // Generate invoice HTML
+    const invoiceHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Appointment Invoice</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+          }
+          .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+          }
+          .invoice-title {
+            font-size: 28px;
+            color: #512da8;
+          }
+          .invoice-details {
+            margin-bottom: 30px;
+          }
+          .customer-details, .salon-details {
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+          }
+          th {
+            background-color: #f8f8f8;
+          }
+          .total-row {
+            font-weight: bold;
+          }
+          .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+          }
+          @media print {
+            body {
+              padding: 0;
+            }
+            .invoice-container {
+              box-shadow: none;
+              border: none;
+            }
+            .no-print {
+              display: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="invoice-header">
+            <div>
+              <div class="invoice-title">Hair & Care Unisex Salon</div>
+              <div>123 Salon Street</div>
+              <div>Indore, MP 452001</div>
+              <div>Phone: +91 12345 67890</div>
+            </div>
+            <div>
+              <div class="invoice-title">INVOICE</div>
+              <div>Date: ${formattedDate}</div>
+              <div>Invoice #: INV-${Math.floor(Math.random() * 10000)}</div>
+            </div>
+          </div>
+          
+          <div class="invoice-details">
+            <div class="customer-details">
+              <h3>BILL TO:</h3>
+              <div>${appointmentCustomer?.name || 'Guest Customer'}</div>
+              <div>${appointmentCustomer?.phone || ''}</div>
+              <div>${appointmentCustomer?.email || ''}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Staff</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Price (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${appointmentResults.map(appointment => {
+                return appointment.services.map(service => `
+                  <tr>
+                    <td>${service.name}</td>
+                    <td>${appointment.staff?.name || 'Staff'}</td>
+                    <td>${new Date(appointment.date).toLocaleDateString()}</td>
+                    <td>${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</td>
+                    <td>₹${service.price.toLocaleString()}</td>
+                  </tr>
+                `).join('');
+              }).join('')}
+              <tr class="total-row">
+                <td colspan="4" style="text-align: right;">Total:</td>
+                <td>₹${invoiceTotal.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>Thank you for your business! We look forward to seeing you again.</p>
+            ${appointmentCustomer?.membership_type ? `<p>Membership Plan: ${appointmentCustomer.membership_type}</p>` : ''}
+          </div>
+          
+          <div class="no-print" style="margin-top: 30px; text-align: center;">
+            <button onclick="window.print();" style="padding: 10px 20px; background: #512da8; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Print Invoice
+            </button>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Write the HTML to the new window and print
+    invoiceWindow.document.open();
+    invoiceWindow.document.write(invoiceHtml);
+    invoiceWindow.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
       <Navbar />
@@ -406,7 +602,7 @@ export default function BookAppointment() {
                 Book Another Appointment
               </button>
               <button 
-                onClick={() => window.print()} 
+                onClick={handlePrintInvoice} 
                 className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 Print Invoice
