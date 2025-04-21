@@ -22,6 +22,7 @@ export default function BookAppointment() {
   const [success, setSuccess] = useState(false);
   const [pendingAppointments, setPendingAppointments] = useState([]);
   const [appointmentTotal, setAppointmentTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch services and staff on component mount
   useEffect(() => {
@@ -242,6 +243,11 @@ export default function BookAppointment() {
     return total;
   };
 
+  // Filter services based on search query
+  const filteredServices = services.filter(service => 
+    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
       <Navbar />
@@ -346,36 +352,62 @@ export default function BookAppointment() {
                     </div>
                     
                     <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Select Services</h3>
-                    <div className="space-y-3 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
-                      {services.map(service => (
-                        <div 
-                          key={service.id}
-                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                            selectedServices.some(s => s.id === service.id)
-                              ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700'
-                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
-                          onClick={() => toggleServiceSelection(service)}
+                    
+                    <div className="mb-3">
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          placeholder="Search services..."
+                        />
+                        <svg 
+                          className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
                         >
-                          <input 
-                            type="checkbox"
-                            checked={selectedServices.some(s => s.id === service.id)}
-                            onChange={() => {}}
-                            className="h-4 w-4 text-purple-600 rounded border-gray-300 dark:border-gray-700 focus:ring-purple-500"
-                          />
-                          <div className="ml-3 flex-1">
-                            <h4 className="font-medium text-gray-700 dark:text-gray-300">{service.name}</h4>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {service.duration_minutes} min
-                              </span>
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                ₹{parseFloat(service.price).toLocaleString()}
-                              </span>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                      {filteredServices.length > 0 ? (
+                        filteredServices.map(service => (
+                          <div 
+                            key={service.id}
+                            className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                              selectedServices.some(s => s.id === service.id)
+                                ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700'
+                                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={() => toggleServiceSelection(service)}
+                          >
+                            <input 
+                              type="checkbox"
+                              checked={selectedServices.some(s => s.id === service.id)}
+                              onChange={() => {}}
+                              className="h-4 w-4 text-purple-600 rounded border-gray-300 dark:border-gray-700 focus:ring-purple-500"
+                            />
+                            <div className="ml-3 flex-1">
+                              <h4 className="font-medium text-gray-700 dark:text-gray-300">{service.name}</h4>
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  {service.duration_minutes} min
+                                </span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  ₹{parseFloat(service.price).toLocaleString()}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-center py-4 text-gray-500 dark:text-gray-400">No services found matching your search.</p>
+                      )}
                     </div>
                     
                     {selectedServices.length > 0 && (
