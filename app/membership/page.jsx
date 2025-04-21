@@ -14,6 +14,8 @@ function MembershipContent() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customer');
   const [customers, setCustomers] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(customerId || '');
   const [isLoading, setIsLoading] = useState(true);
   
@@ -28,11 +30,14 @@ function MembershipContent() {
           
         if (error) throw error;
         
-        setCustomers(data.map(customer => ({
+        const mappedCustomers = data.map(customer => ({
           id: customer.id,
           name: customer.name,
           membershipType: customer.membership_type
-        })));
+        }));
+        
+        setCustomers(mappedCustomers);
+        setFilteredCustomers(mappedCustomers);
         
       } catch (error) {
         console.error('Error fetching customers:', error);
@@ -44,6 +49,14 @@ function MembershipContent() {
     
     fetchCustomers();
   }, []);
+
+  // Filter customers when search term changes
+  useEffect(() => {
+    const results = customers.filter(customer =>
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredCustomers(results);
+  }, [searchTerm, customers]);
 
   const handleSelectPlan = async (planType) => {
     if (!selectedCustomer) {
@@ -103,23 +116,38 @@ function MembershipContent() {
               Choose the perfect membership plan for exclusive benefits, discounts, and rewards.
             </p>
             
-            {/* Customer Selection */}
+            {/* Customer Selection with Search */}
             <div className="mt-6 max-w-md">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Assign Membership to Customer
               </label>
+              
+              {/* Search input */}
+              <div className="mb-2">
+                <input
+                  type="text"
+                  placeholder="Search customers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              
               <select
                 value={selectedCustomer}
                 onChange={(e) => setSelectedCustomer(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Select a customer</option>
-                {customers.map(customer => (
+                {filteredCustomers.map(customer => (
                   <option key={customer.id} value={customer.id}>
                     {customer.name} {customer.membershipType !== 'None' ? `(Current: ${customer.membershipType})` : '(No membership)'}
                   </option>
                 ))}
               </select>
+              {filteredCustomers.length === 0 && searchTerm !== '' && (
+                <p className="mt-2 text-sm text-red-500">No customers found matching "{searchTerm}"</p>
+              )}
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Select a customer before choosing a membership plan below
               </p>
