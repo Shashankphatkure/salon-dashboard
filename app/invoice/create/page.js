@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import InvoiceDisplay from '../../components/InvoiceDisplay';
 import { getAppointmentById } from '../../../lib/db';
@@ -10,6 +10,7 @@ import { useAuth } from '../../../lib/auth';
 export default function InvoiceCreatePage() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const appointmentId = searchParams.get('appointment');
   
   const [appointment, setAppointment] = useState(null);
@@ -48,6 +49,10 @@ export default function InvoiceCreatePage() {
       fetchAppointmentData();
     }
   }, [appointmentId, user]);
+
+  const handleGoBack = () => {
+    router.back();
+  };
   
   if (authLoading || loading) {
     return (
@@ -70,7 +75,7 @@ export default function InvoiceCreatePage() {
             <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h2>
             <p className="text-gray-700 dark:text-gray-300">{error}</p>
             <button
-              onClick={() => window.history.back()}
+              onClick={() => router.back()}
               className="mt-6 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
             >
               Go Back
@@ -86,7 +91,7 @@ export default function InvoiceCreatePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
       <Navbar />
-      <InvoiceDisplay appointment={appointment} />
+      <InvoiceDisplay appointment={appointment} onClose={handleGoBack} />
     </div>
   );
 } 

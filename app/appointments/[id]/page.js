@@ -373,7 +373,7 @@ export default function AppointmentDetailPage({ params }) {
       </main>
       
       {/* Invoice Modal */}
-      {showInvoice && <InvoiceDisplay appointment={appointment} />}
+      {showInvoice && <InvoiceDisplay appointment={appointment} onClose={() => setShowInvoice(false)} />}
     </div>
   );
 } 
