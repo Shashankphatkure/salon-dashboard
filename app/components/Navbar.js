@@ -30,8 +30,8 @@ export default function Navbar() {
   return (
     <header className="p-4 md:p-6 flex items-center justify-between border-b bg-white dark:bg-gray-800 shadow-sm relative z-20">
       <Link href="/dashboard" className="flex items-center gap-2">
-        <img src="/logo.png" alt="Salon Logo" className="h-8 w-8" />
-        <h2 className="text-xs md:text-xl font-bold text-purple-800 dark:text-purple-300">Hair & Care Unisex Salon</h2>
+        <img src="/logo.png" alt="Salon Logo" className="h-12 w-12" />
+        <h2 className="text-xs md:text-xl font-bold text-purple-800 dark:text-purple-300">Hair & Care</h2>
       </Link>
       
       {/* Desktop menu */}
