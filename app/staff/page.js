@@ -500,7 +500,7 @@ export default function StaffPage() {
                         </button>
                         <button 
                           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-                          onClick={() => router.push(`/staff/${selectedStaffId}/edit`)}
+                          onClick={() => router.push(`/staff/edit/${selectedStaffId}`)}
                         >
                           Edit Staff
                         </button>
