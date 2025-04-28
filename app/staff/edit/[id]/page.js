@@ -16,9 +16,7 @@ export default function EditStaffPage({ params }) {
   
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
-    role: '',
     bio: '',
     is_available: true,
     services: []
@@ -53,9 +51,7 @@ export default function EditStaffPage({ params }) {
         // Format staff data for form
         setFormData({
           name: staffData.name || '',
-          email: staffData.email || '',
           phone: staffData.phone || '',
-          role: staffData.role || '',
           bio: staffData.bio || '',
           is_available: staffData.is_available !== false,
           services: staffData.services?.map(service => 
@@ -118,8 +114,8 @@ export default function EditStaffPage({ params }) {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.email || !formData.role) {
-      setError('Please fill in all required fields (Name, Email, and Role)');
+    if (!formData.name) {
+      setError('Please fill in all required fields (Name)');
       setSuccess(null);
       return;
     }
@@ -200,21 +196,6 @@ export default function EditStaffPage({ params }) {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="email">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
                   <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="phone">
                     Phone
                   </label>
@@ -226,31 +207,6 @@ export default function EditStaffPage({ params }) {
                     onChange={handleChange}
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="role">
-                    Role <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    required
-                  >
-                    <option value="">Select a role</option>
-                    <option value="Stylist">Stylist</option>
-                    <option value="Hair Specialist">Hair Specialist</option>
-                    <option value="Colorist">Colorist</option>
-                    <option value="Makeup Artist">Makeup Artist</option>
-                    <option value="Nail Technician">Nail Technician</option>
-                    <option value="Esthetician">Esthetician</option>
-                    <option value="Massage Therapist">Massage Therapist</option>
-                    <option value="Receptionist">Receptionist</option>
-                    <option value="Manager">Manager</option>
-                  </select>
                 </div>
                 
                 <div className="flex items-center">
