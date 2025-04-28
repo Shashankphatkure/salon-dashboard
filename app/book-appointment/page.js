@@ -1039,13 +1039,7 @@ export default function BookAppointment() {
                     {loading ? 'Booking...' : 'Book Appointment'}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => router.push('/sales')}
-                    className="ml-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50"
-                  >
-                    Sales
-                  </button>
+                  
                 </div>
               </form>
             </div>
