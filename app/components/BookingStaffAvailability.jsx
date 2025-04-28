@@ -308,62 +308,74 @@ export default function BookingStaffAvailability({
                               
                               // Check if the time slot is blocked
                               const isBlocked = blockedSlots[person.id] && blockedSlots[person.id][time];
+                              // Check if available via staff_availability
+                              const isAvailable = isTimeSlotAvailable(person.id, time);
                               
                               return (
-                                <button 
-                                  key={index}
-                                  type="button"
-                                  disabled={isBlocked}
-                                  className={`px-3 py-1 text-xs rounded-full border ${
-                                    isBlocked
-                                      ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 cursor-not-allowed opacity-70'
-                                      : selectedTime === time
-                                        ? 'bg-purple-600 border-purple-500 text-white'
-                                        : isInSelectedRange
-                                          ? 'bg-purple-200 dark:bg-purple-900/50 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300'
-                                          : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                  }`}
+                                <div
+                                  key={`${person.id}-${time}`}
+                                  className={`
+                                    rounded-md px-2 py-1 cursor-pointer text-center text-sm
+                                    ${time === selectedTime ? 'bg-purple-500 text-white' : 
+                                      isInSelectedRange ? 'bg-purple-200 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
+                                      isBlocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 
+                                      !isAvailable ? 'bg-red-100 text-red-600 cursor-not-allowed' :
+                                      'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50'
+                                    }
+                                    ${time === selectedTime ? 'font-bold' : 'font-medium'}
+                                    transition-colors
+                                  `}
                                   onClick={(e) => {
-                                    e.preventDefault();
+                                    // Stop propagation to prevent staff selection
                                     e.stopPropagation();
                                     
                                     if (isBlocked) {
                                       showBlockInfo(e, person.id, time);
+                                    } else if (!isAvailable) {
+                                      // Show a tooltip or message about the slot being booked
+                                      alert('This time slot is already booked.');
                                     } else {
                                       console.log('Selecting time slot:', time);
                                       
-                                      // If we're selecting the same time, clear it
+                                      // Always set the time first
                                       if (selectedTime === time) {
+                                        // If selecting the same time, clear it
                                         setSelectedTime('');
                                         setSelectedDuration(1);
                                       } else {
-                                        // Check if there's enough consecutive slots available for default duration
-                                        const availableSlots = getAvailableTimeSlots();
-                                        const timeIndex = availableSlots.indexOf(time);
-                                        
-                                        // Set maximum duration based on available consecutive slots
-                                        let maxDuration = 1;
-                                        let nextSlotIndex = timeIndex + 1;
-                                        
-                                        while (
-                                          nextSlotIndex < availableSlots.length && 
-                                          areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
-                                        ) {
-                                          maxDuration++;
-                                          nextSlotIndex++;
-                                        }
-                                        
+                                        // Set the new time immediately
                                         setSelectedTime(time);
-                                        setSelectedDuration(Math.min(selectedDuration, maxDuration));
+                                        
+                                        // Then calculate appropriate duration
+                                        const availableSlots = getAvailableTimeSlots();
+                                        if (availableSlots.includes(time)) {
+                                          const timeIndex = availableSlots.indexOf(time);
+                                          
+                                          // Set maximum duration based on available consecutive slots
+                                          let maxDuration = 1;
+                                          let nextSlotIndex = timeIndex + 1;
+                                          
+                                          while (
+                                            nextSlotIndex < availableSlots.length && 
+                                            areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
+                                          ) {
+                                            maxDuration++;
+                                            nextSlotIndex++;
+                                          }
+                                          
+                                          console.log(`Max duration for ${time}: ${maxDuration} slots`);
+                                          // Ensure duration doesn't exceed what's available
+                                          setSelectedDuration(Math.min(selectedDuration, maxDuration));
+                                        } else {
+                                          // Fallback if the slot isn't in availableSlots (shouldn't happen)
+                                          setSelectedDuration(1);
+                                        }
                                       }
                                     }
                                   }}
                                 >
-                                  {formatTime(time)}
-                                  {isBlocked && (
-                                    <span className="ml-1">🔒</span>
-                                  )}
-                                </button>
+                                  <span className="block text-sm font-medium">{formatTime(time)}</span>
+                                </div>
                               );
                             })}
                           </>
