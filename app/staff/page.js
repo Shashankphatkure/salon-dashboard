@@ -459,34 +459,14 @@ export default function StaffPage() {
                   
                   {staff.find(s => s.id === selectedStaffId) && (
                     <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
                         <div>
                           <h3 className="text-md font-medium text-gray-800 dark:text-white mb-3">Contact Information</h3>
                           <div className="space-y-2">
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                              <span className="text-gray-800 dark:text-white font-medium">{staff.find(s => s.id === selectedStaffId)?.email || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
                               <span className="text-gray-600 dark:text-gray-400">Phone:</span>
                               <span className="text-gray-800 dark:text-white font-medium">{staff.find(s => s.id === selectedStaffId)?.phone || 'N/A'}</span>
                             </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-md font-medium text-gray-800 dark:text-white mb-3">Services</h3>
-                          <div className="space-y-2">
-                            {staff.find(s => s.id === selectedStaffId)?.specialties?.length > 0 ? (
-                              staff.find(s => s.id === selectedStaffId)?.specialties.map((specialty, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                                  <span className="text-gray-800 dark:text-white">{specialty}</span>
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-gray-600 dark:text-gray-400">No services assigned.</p>
-                            )}
                           </div>
                         </div>
                       </div>
