@@ -153,6 +153,11 @@ export default function InvoicePage() {
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
           }
+          .salon-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 10px;
+          }
           .invoice-title {
             font-size: 28px;
             color: #512da8;
@@ -202,6 +207,7 @@ export default function InvoicePage() {
         <div class="invoice-container">
           <div class="invoice-header">
             <div>
+              <img src="/logo.png" alt="Salon Logo" class="salon-logo" />
               <div class="invoice-title">Hair & Care Unisex Salon</div>
               <div>Shop No 03, Ground floor, Govind Chintamani CHS</div>
               <div>Plot No.57/4, near Taluka Police Station, Nityanand Nagar</div>
