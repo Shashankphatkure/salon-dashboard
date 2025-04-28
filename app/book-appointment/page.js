@@ -14,6 +14,7 @@ export default function BookAppointment() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState(1); // Default 1 = 30 minutes (1 slot)
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -136,6 +137,10 @@ export default function BookAppointment() {
     } else {
       setSelectedServices([...selectedServices, service]);
     }
+    
+    // Reset time selection when services change as duration requirements may change
+    setSelectedTime('');
+    setSelectedDuration(1);
   };
 
   // Add service to pending appointments
@@ -238,15 +243,20 @@ export default function BookAppointment() {
       
       // Add current selection if it has all required fields
       if (selectedServices.length > 0 && selectedStaff && selectedTime) {
-        // Calculate end time based on service duration (now in 30-min intervals)
+        // Calculate end time based on service duration and selected duration (30-min intervals)
         const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
+        
+        // Use either service duration or selected duration, whichever is longer
         const servicesDuration = selectedServices.reduce((total, service) => {
           return total + (service.duration_minutes || 30);
         }, 0);
         
+        const selectedDurationMinutes = selectedDuration * 30;
+        const effectiveDuration = Math.max(servicesDuration, selectedDurationMinutes);
+        
         // Calculate end time in minutes
         const startTotalMinutes = (startHour * 60) + (startMinute || 0);
-        const endTotalMinutes = startTotalMinutes + servicesDuration;
+        const endTotalMinutes = startTotalMinutes + effectiveDuration;
         
         // Convert back to hours and minutes
         const endHour = Math.floor(endTotalMinutes / 60);
@@ -350,6 +360,7 @@ export default function BookAppointment() {
       setSelectedServices([]);
       setSelectedStaff(null);
       setSelectedTime('');
+      setSelectedDuration(1);
       setPendingAppointments([]);
       setSuccess(true);
       setError(null);
@@ -603,6 +614,64 @@ export default function BookAppointment() {
     invoiceWindow.document.open();
     invoiceWindow.document.write(invoiceHtml);
     invoiceWindow.document.close();
+  };
+
+  // Calculate total duration based on selected time slots
+  const calculateSessionDuration = (numSlots) => {
+    return numSlots * 30; // Each slot is 30 minutes
+  };
+
+  // Get end time based on start time and duration slots
+  const getEndTimeFromDuration = (startTime, durationSlots) => {
+    if (!startTime) return '';
+    
+    const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
+    const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
+    
+    const endHour = Math.floor(endTotalMinutes / 60);
+    const endMinute = endTotalMinutes % 60;
+    
+    return `${endHour}:${endMinute === 0 ? '00' : endMinute}`;
+  };
+  
+  // Check if a time slot can accommodate the selected duration
+  const canFitDuration = (startTime, availableSlots, durationSlots) => {
+    if (!startTime || durationSlots <= 0) return false;
+    
+    const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
+    const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+    
+    // Check if each required slot is available
+    for (let i = 1; i < durationSlots; i++) {
+      const nextSlotMinutes = startTotalMinutes + (i * 30);
+      const nextSlotHour = Math.floor(nextSlotMinutes / 60);
+      const nextSlotMinute = nextSlotMinutes % 60;
+      const nextSlot = `${nextSlotHour}:${nextSlotMinute === 0 ? '00' : nextSlotMinute}`;
+      
+      if (!availableSlots.includes(nextSlot)) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Format duration for display
+  const formatDuration = (slots) => {
+    const minutes = slots * 30;
+    if (minutes < 60) {
+      return `${minutes} minutes`;
+    }
+    
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    
+    if (remainingMinutes === 0) {
+      return `${hours} hour${hours > 1 ? 's' : ''}`;
+    }
+    
+    return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} minutes`;
   };
 
   return (
@@ -1003,45 +1072,96 @@ export default function BookAppointment() {
                           </div>
                         </div>
                         
+                        {/* Time slot selection with duration */}
                         <div>
                           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Available Times:</h4>
                           {availableSlots.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {isSelected && getAvailableTimeSlots().map((time, index) => (
-                                <button 
-                                  key={index}
-                                  type="button"
-                                  className={`px-3 py-1 text-xs rounded-full border ${
-                                    selectedTime === time
-                                      ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
-                                      : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                  }`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    console.log('Selecting time slot:', time);
-                                    setSelectedTime(time);
-                                  }}
-                                >
-                                  {formatTime(time)}
-                                </button>
-                              ))}
-                              
-                              {!isSelected && availableSlots.map((slot, index) => {
-                                // Group slots by hour for cleaner display
-                                const timeGroups = {};
-                                availableSlots.forEach(s => {
-                                  const hour = parseInt(s.start_time.split(':')[0], 10);
-                                  if (!timeGroups[hour]) timeGroups[hour] = [];
-                                  timeGroups[hour].push(s);
-                                });
-                                
-                                return Object.entries(timeGroups).map(([hour, slots]) => (
-                                  <div key={hour} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
-                                    {formatTime(`${hour}:00`)} - {slots.length * 2} slots
+                            <div>
+                              {selectedTime && (
+                                <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                      Selected time: {formatTime(selectedTime)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedTime('');
+                                        setSelectedDuration(1);
+                                      }}
+                                      className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                    >
+                                      Clear
+                                    </button>
                                   </div>
-                                ));
-                              })}
+                                  
+                                  <div className="flex items-center">
+                                    <label className="text-sm text-gray-600 dark:text-gray-400 mr-2">Duration:</label>
+                                    <select
+                                      value={selectedDuration}
+                                      onChange={(e) => setSelectedDuration(parseInt(e.target.value, 10))}
+                                      className="py-1 px-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white mr-3"
+                                      disabled={!selectedTime}
+                                    >
+                                      {[...Array(12)].map((_, i) => {
+                                        const slots = i + 1;
+                                        return (
+                                          <option 
+                                            key={slots} 
+                                            value={slots}
+                                            disabled={!canFitDuration(selectedTime, getAvailableTimeSlots(), slots)}
+                                          >
+                                            {formatDuration(slots)}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                    
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                      {selectedTime && `${formatTime(selectedTime)} - ${formatTime(getEndTimeFromDuration(selectedTime, selectedDuration))}`}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <div className="flex flex-wrap gap-2">
+                                {isSelected && getAvailableTimeSlots().map((time, index) => (
+                                  <button 
+                                    key={index}
+                                    type="button"
+                                    className={`px-3 py-1 text-xs rounded-full border ${
+                                      selectedTime === time
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    }`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Selecting time slot:', time);
+                                      setSelectedTime(time);
+                                      setSelectedDuration(1); // Reset duration when changing time
+                                    }}
+                                  >
+                                    {formatTime(time)}
+                                  </button>
+                                ))}
+                                
+                                {!isSelected && availableSlots.map((slot, index) => {
+                                  // Group slots by hour for cleaner display
+                                  const timeGroups = {};
+                                  availableSlots.forEach(s => {
+                                    const hour = parseInt(s.start_time.split(':')[0], 10);
+                                    if (!timeGroups[hour]) timeGroups[hour] = [];
+                                    timeGroups[hour].push(s);
+                                  });
+                                  
+                                  return Object.entries(timeGroups).map(([hour, slots]) => (
+                                    <div key={hour} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                                      {formatTime(`${hour}:00`)} - {slots.length * 2} slots
+                                    </div>
+                                  ));
+                                })}
+                              </div>
                             </div>
                           ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">No availability for selected date</p>
