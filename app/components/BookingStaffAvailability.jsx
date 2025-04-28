@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
 
-export default function StaffAvailability({
+export default function BookingStaffAvailability({
   staff,
   staffAvailability,
   selectedDate,
@@ -20,68 +18,32 @@ export default function StaffAvailability({
   formatDuration,
   getEndTimeFromDuration
 }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
-  const [availability, setAvailability] = useState({});
-  const [statusMessage, setStatusMessage] = useState({ type: '', message: '' });
-  const [weekDays, setWeekDays] = useState([]);
-
-  const supabase = createClientComponentClient();
-
-  // Load availability data (called only when needed)
-  const loadAvailabilityData = useCallback(async () => {
-    if (!selectedStaff) return;
-    
-    try {
-      setIsLoadingAvailability(true);
-      
-      // Fetch availability for selected staff for the current week
-      const startDate = format(weekDays[0], 'yyyy-MM-dd');
-      const endDate = format(weekDays[6], 'yyyy-MM-dd');
-      
-      const { data: availData, error: availError } = await supabase
-        .from('staff_availability')
-        .select('*')
-        .eq('staff_id', selectedStaff)
-        .gte('date', startDate)
-        .lte('date', endDate);
-        
-      if (availError) throw availError;
-      
-      // Process availability data
-      const availabilityMap = { ...availability };
-      
-      if (!availabilityMap[selectedStaff]) {
-        availabilityMap[selectedStaff] = {};
-      }
-      
-      availData.forEach(item => {
-        if (!availabilityMap[selectedStaff][item.date]) {
-          availabilityMap[selectedStaff][item.date] = [];
-        }
-        
-        availabilityMap[selectedStaff][item.date].push({
-          id: item.id,
-          start: item.start_time,
-          end: item.end_time,
-          isAvailable: item.is_available
-        });
-      });
-      
-      setAvailability(availabilityMap);
-      
-      // Auto-clear any old status messages
-      setStatusMessage({ type: '', message: '' });
-    } catch (error) {
-      console.error('Error fetching availability data:', error);
-      setStatusMessage({ 
-        type: 'error', 
-        message: 'Failed to load availability data. Please try again.' 
-      });
-    } finally {
-      setIsLoadingAvailability(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  
+  // Update available time slots when staff changes
+  useEffect(() => {
+    if (selectedStaff && getAvailableTimeSlots) {
+      setAvailableTimeSlots(getAvailableTimeSlots());
     }
-  }, [selectedStaff, weekDays, availability, supabase]);
+  }, [selectedStaff, getAvailableTimeSlots]);
+
+  // Handle duration change directly
+  const handleDurationChange = (e, timeSlot) => {
+    e.stopPropagation();
+    const newDuration = parseInt(e.target.value, 10);
+    setSelectedDuration(newDuration);
+  };
+
+  // Check if time slots are consecutive
+  const areConsecutiveSlots = (slot1, slot2) => {
+    const [hour1, minute1] = slot1.split(':').map(num => parseInt(num, 10));
+    const [hour2, minute2] = slot2.split(':').map(num => parseInt(num, 10));
+    
+    const totalMinutes1 = hour1 * 60 + minute1;
+    const totalMinutes2 = hour2 * 60 + minute2;
+    
+    return totalMinutes2 - totalMinutes1 === 30;
+  };
 
   return (
     <div className="mt-4">
@@ -108,6 +70,7 @@ export default function StaffAvailability({
                   setSelectedStaff(person);
                   // Reset selected time when switching staff
                   setSelectedTime('');
+                  setSelectedDuration(1);
                 }}
               >
                 <div className="flex items-center mb-4">
@@ -147,6 +110,7 @@ export default function StaffAvailability({
                             <button
                               type="button"
                               onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 setSelectedTime('');
                                 setSelectedDuration(1);
@@ -157,16 +121,14 @@ export default function StaffAvailability({
                             </button>
                           </div>
                           
-                          <div className="flex items-center">
+                          <div className="flex flex-wrap items-center">
                             <label className="text-sm text-gray-600 dark:text-gray-400 mr-2">Duration:</label>
                             <select
                               value={selectedDuration}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                setSelectedDuration(parseInt(e.target.value, 10));
-                              }}
+                              onChange={(e) => handleDurationChange(e, selectedTime)}
                               className="py-1 px-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white mr-3"
                               disabled={!selectedTime}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               {[...Array(12)].map((_, i) => {
                                 const slots = i + 1;
@@ -182,7 +144,7 @@ export default function StaffAvailability({
                               })}
                             </select>
                             
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-sm text-gray-600 dark:text-gray-400 mt-1 sm:mt-0">
                               {selectedTime && `${formatTime(selectedTime)} - ${formatTime(getEndTimeFromDuration(selectedTime, selectedDuration))}`}
                             </span>
                           </div>
@@ -190,26 +152,68 @@ export default function StaffAvailability({
                       )}
                       
                       <div className="flex flex-wrap gap-2">
-                        {isSelected && getAvailableTimeSlots().map((time, index) => (
-                          <button 
-                            key={index}
-                            type="button"
-                            className={`px-3 py-1 text-xs rounded-full border ${
-                              selectedTime === time
-                                ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
-                                : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              console.log('Selecting time slot:', time);
-                              setSelectedTime(time);
-                              setSelectedDuration(1); // Reset duration when changing time
-                            }}
-                          >
-                            {formatTime(time)}
-                          </button>
-                        ))}
+                        {isSelected && getAvailableTimeSlots().map((time, index) => {
+                          // Determine if this slot would be included in selected time range
+                          const isInSelectedRange = selectedTime && selectedDuration > 1 ? (() => {
+                            // Convert selected time to minutes
+                            const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
+                            const startTotalMinutes = startHour * 60 + startMinute;
+                            
+                            // Convert current time slot to minutes
+                            const [timeHour, timeMinute] = time.split(':').map(num => parseInt(num, 10));
+                            const timeTotalMinutes = timeHour * 60 + timeMinute;
+                            
+                            // Check if this slot falls within the selected duration range
+                            return timeTotalMinutes > startTotalMinutes && 
+                                   timeTotalMinutes < startTotalMinutes + (selectedDuration * 30);
+                          })() : false;
+                          
+                          return (
+                            <button 
+                              key={index}
+                              type="button"
+                              className={`px-3 py-1 text-xs rounded-full border ${
+                                selectedTime === time
+                                  ? 'bg-purple-600 border-purple-500 text-white'
+                                  : isInSelectedRange
+                                    ? 'bg-purple-200 dark:bg-purple-900/50 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300'
+                                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Selecting time slot:', time);
+                                
+                                // If we're selecting the same time, clear it
+                                if (selectedTime === time) {
+                                  setSelectedTime('');
+                                  setSelectedDuration(1);
+                                } else {
+                                  // Check if there's enough consecutive slots available for default duration
+                                  const availableSlots = getAvailableTimeSlots();
+                                  const timeIndex = availableSlots.indexOf(time);
+                                  
+                                  // Set maximum duration based on available consecutive slots
+                                  let maxDuration = 1;
+                                  let nextSlotIndex = timeIndex + 1;
+                                  
+                                  while (
+                                    nextSlotIndex < availableSlots.length && 
+                                    areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
+                                  ) {
+                                    maxDuration++;
+                                    nextSlotIndex++;
+                                  }
+                                  
+                                  setSelectedTime(time);
+                                  setSelectedDuration(Math.min(selectedDuration, maxDuration));
+                                }
+                              }}
+                            >
+                              {formatTime(time)}
+                            </button>
+                          );
+                        })}
                         
                         {!isSelected && (
                           <div className="flex flex-wrap gap-2">
