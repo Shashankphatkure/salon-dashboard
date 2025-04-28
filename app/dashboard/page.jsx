@@ -254,7 +254,7 @@ export default function Dashboard() {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Appointments Card */}
-          <Link href="/book-appointment" className="block">
+          <Link href="/appointments" className="block">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
               <div className="flex items-center mb-3">
                 <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3">
