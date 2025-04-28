@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../../lib/auth';
 import { getAppointmentById, updateAppointment } from '../../../lib/db';
+import InvoiceDisplay from '../../components/InvoiceDisplay';
 
 export default function AppointmentDetailPage({ params }) {
   // Unwrap the params using React.use()
@@ -18,6 +19,7 @@ export default function AppointmentDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
   
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -93,10 +95,9 @@ export default function AppointmentDetailPage({ params }) {
       const updatedAppointment = await updateAppointment(id, updates);
       setAppointment(updatedAppointment);
       
-      // Optionally, redirect to invoice if completed
+      // Show invoice immediately if appointment is completed
       if (newStatus === 'completed') {
-        // router.push(`/invoice/create?appointment=${id}`);
-        // Uncomment the above if you have an invoice creation page
+        setShowInvoice(true);
       }
       
       setUpdateLoading(false);
@@ -114,6 +115,11 @@ export default function AppointmentDetailPage({ params }) {
     return appointment.services.reduce((total, serviceItem) => {
       return total + (serviceItem.service?.price || 0);
     }, 0);
+  };
+
+  // Handle generate invoice button click
+  const handleGenerateInvoice = () => {
+    setShowInvoice(true);
   };
   
   if (authLoading || loading) {
@@ -236,7 +242,7 @@ export default function AppointmentDetailPage({ params }) {
                   )}
                   {appointment.status === 'completed' && (
                     <button
-                      onClick={() => router.push(`/invoice/create?appointment=${appointment.id}`)}
+                      onClick={handleGenerateInvoice}
                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
                     >
                       Generate Invoice
@@ -365,6 +371,9 @@ export default function AppointmentDetailPage({ params }) {
           </div>
         </div>
       </main>
+      
+      {/* Invoice Modal */}
+      {showInvoice && <InvoiceDisplay appointment={appointment} />}
     </div>
   );
 } 
