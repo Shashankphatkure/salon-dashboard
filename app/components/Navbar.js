@@ -17,7 +17,7 @@ export default function Navbar() {
     { href: '/customers', label: 'Customers' },
     { href: '/membership', label: 'Membership' },
     { href: '/credit', label: 'Credit' },
-    { href: '/invoice', label: 'Invoice' },
+    { href: '/invoice', label: 'Invoices' },
     { href: '/products', label: 'Products' },
     { href: '/reports', label: 'Reports' }
   ];
