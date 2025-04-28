@@ -18,6 +18,7 @@ export default function Navbar() {
     { href: '/credit', label: 'Credit' },
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/invoice', label: 'Invoice' },
+    { href: '/products', label: 'Products' },
     { href: '/reports', label: 'Reports' }
   ];
   
