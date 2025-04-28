@@ -19,13 +19,55 @@ export default function BookingStaffAvailability({
   getEndTimeFromDuration
 }) {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [blockedSlots, setBlockedSlots] = useState({});
+  const [timeBlockInfo, setTimeBlockInfo] = useState(null);
   
   // Update available time slots when staff changes
   useEffect(() => {
     if (selectedStaff && getAvailableTimeSlots) {
-      setAvailableTimeSlots(getAvailableTimeSlots());
+      const slots = getAvailableTimeSlots();
+      setAvailableTimeSlots(slots);
+      console.log('Available slots for selected staff:', slots);
     }
   }, [selectedStaff, getAvailableTimeSlots]);
+
+  // Mock function to simulate time blocking logic
+  // In a real app, this would use actual booking data from your database
+  useEffect(() => {
+    // Create demo blocks (this would come from your database in a real app)
+    const mockBlockedSlots = {};
+    
+    staff.forEach(staffMember => {
+      mockBlockedSlots[staffMember.id] = {};
+      
+      // Generate some random blocks for demo purposes
+      if (Math.random() > 0.3) { // 70% chance to have blocks
+        const numBlocks = Math.floor(Math.random() * 3) + 1; // 1-3 blocks
+        
+        for (let i = 0; i < numBlocks; i++) {
+          const startHour = Math.floor(Math.random() * 8) + 9; // 9 AM to 5 PM
+          const duration = Math.floor(Math.random() * 4) + 1; // 1-4 slots (30 min to 2 hours)
+          
+          // Block consecutive slots
+          for (let j = 0; j < duration; j++) {
+            const time = `${startHour + Math.floor(j/2)}:${j % 2 === 0 ? '00' : '30'}`;
+            
+            if (!mockBlockedSlots[staffMember.id][time]) {
+              mockBlockedSlots[staffMember.id][time] = {
+                customerName: ['Rahul', 'Priya', 'Amir', 'Neha', 'Vikram'][Math.floor(Math.random() * 5)],
+                service: ['Haircut', 'Coloring', 'Styling', 'Spa', 'Facial'][Math.floor(Math.random() * 5)],
+                endTime: duration,
+                isActive: true,
+                startTime: new Date().getTime() - (Math.random() * 3600000) // Random start time within last hour
+              };
+            }
+          }
+        }
+      }
+    });
+    
+    setBlockedSlots(mockBlockedSlots);
+  }, [staff, selectedDate]);
 
   // Handle duration change directly
   const handleDurationChange = (e, timeSlot) => {
@@ -45,6 +87,75 @@ export default function BookingStaffAvailability({
     return totalMinutes2 - totalMinutes1 === 30;
   };
 
+  // Show info for a blocked time slot
+  const showBlockInfo = (e, staffId, time) => {
+    e.stopPropagation();
+    if (blockedSlots[staffId] && blockedSlots[staffId][time]) {
+      setTimeBlockInfo({
+        staffId,
+        time,
+        ...blockedSlots[staffId][time]
+      });
+    }
+  };
+  
+  // Close the time block info popup
+  const closeBlockInfo = () => {
+    setTimeBlockInfo(null);
+  };
+  
+  // Calculate remaining time for a block
+  const getRemainingTime = (startTime) => {
+    const now = new Date().getTime();
+    const elapsedMs = now - startTime;
+    
+    // Mock timer - in a real app this would be based on actual appointment duration
+    const totalDurationMs = 45 * 60 * 1000; // 45 minutes
+    const remainingMs = totalDurationMs - elapsedMs;
+    
+    if (remainingMs <= 0) return 'Completed';
+    
+    const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
+    return `${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''} remaining`;
+  };
+
+  // Generate 30-minute time slots for the day (9 AM to 8 PM)
+  const getAllTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour <= 20; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Skip 8:30 PM
+        if (hour === 20 && minute === 30) continue;
+        slots.push(`${hour}:${minute === 0 ? '00' : minute}`);
+      }
+    }
+    return slots;
+  };
+
+  // Check if a time slot is available based on staffAvailability
+  const isTimeSlotAvailable = (staffId, timeSlot) => {
+    if (!staffId || !timeSlot) return false;
+    
+    const [hour, minute] = timeSlot.split(':').map(num => parseInt(num, 10));
+    const slotMinutes = hour * 60 + (minute || 0);
+    
+    return staffAvailability.some(slot => {
+      if (slot.staff_id !== staffId || slot.date !== selectedDate || !slot.is_available) {
+        return false;
+      }
+      
+      const startHour = parseInt(slot.start_time.split(':')[0], 10);
+      const startMinute = parseInt(slot.start_time.split(':')[1] || 0, 10);
+      const endHour = parseInt(slot.end_time.split(':')[0], 10);
+      const endMinute = parseInt(slot.end_time.split(':')[1] || 0, 10);
+      
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      
+      return slotMinutes >= startMinutes && slotMinutes < endMinutes;
+    });
+  };
+
   return (
     <div className="mt-4">
       {staff && staff.length > 0 ? (
@@ -56,6 +167,9 @@ export default function BookingStaffAvailability({
               slot.date === selectedDate &&
               slot.is_available
             );
+            
+            // Get all 30-minute slots for visualization
+            const timeSlots = getAllTimeSlots();
             
             return (
               <div 
@@ -151,69 +265,181 @@ export default function BookingStaffAvailability({
                         </div>
                       )}
                       
-                      <div className="flex flex-wrap gap-2">
-                        {isSelected && getAvailableTimeSlots().map((time, index) => {
-                          // Determine if this slot would be included in selected time range
-                          const isInSelectedRange = selectedTime && selectedDuration > 1 ? (() => {
-                            // Convert selected time to minutes
-                            const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
-                            const startTotalMinutes = startHour * 60 + startMinute;
+                      {/* Time slots visualization - shows both available and blocked slots */}
+                      <div className="mb-4">
+                        <h5 className="text-sm text-gray-600 dark:text-gray-400 mb-2">Today's Schedule:</h5>
+                        <div className="flex flex-wrap gap-1 items-start p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          {timeSlots.slice(0, 12).map((timeSlot, i) => {
+                            // Check if the time slot is blocked
+                            const isBlocked = blockedSlots[person.id] && blockedSlots[person.id][timeSlot];
                             
-                            // Convert current time slot to minutes
-                            const [timeHour, timeMinute] = time.split(':').map(num => parseInt(num, 10));
-                            const timeTotalMinutes = timeHour * 60 + timeMinute;
+                            // Check if the slot is available
+                            const isAvailable = isTimeSlotAvailable(person.id, timeSlot) && !isBlocked;
                             
-                            // Check if this slot falls within the selected duration range
-                            return timeTotalMinutes > startTotalMinutes && 
-                                   timeTotalMinutes < startTotalMinutes + (selectedDuration * 30);
-                          })() : false;
-                          
-                          return (
-                            <button 
-                              key={index}
-                              type="button"
-                              className={`px-3 py-1 text-xs rounded-full border ${
-                                selectedTime === time
-                                  ? 'bg-purple-600 border-purple-500 text-white'
-                                  : isInSelectedRange
-                                    ? 'bg-purple-200 dark:bg-purple-900/50 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300'
-                                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                console.log('Selecting time slot:', time);
-                                
-                                // If we're selecting the same time, clear it
-                                if (selectedTime === time) {
-                                  setSelectedTime('');
-                                  setSelectedDuration(1);
-                                } else {
-                                  // Check if there's enough consecutive slots available for default duration
-                                  const availableSlots = getAvailableTimeSlots();
-                                  const timeIndex = availableSlots.indexOf(time);
-                                  
-                                  // Set maximum duration based on available consecutive slots
-                                  let maxDuration = 1;
-                                  let nextSlotIndex = timeIndex + 1;
-                                  
-                                  while (
-                                    nextSlotIndex < availableSlots.length && 
-                                    areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
-                                  ) {
-                                    maxDuration++;
-                                    nextSlotIndex++;
+                            // Check if this is part of selected time range
+                            const isInSelectedRange = selectedTime && selectedDuration > 1 && isSelected ? (() => {
+                              // Convert selected time to minutes
+                              const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
+                              const startTotalMinutes = startHour * 60 + startMinute;
+                              
+                              // Convert current time slot to minutes
+                              const [hour, minute] = timeSlot.split(':').map(num => parseInt(num, 10));
+                              const currentTotalMinutes = hour * 60 + (minute || 0);
+                              
+                              // Check if this slot falls within the selected duration range
+                              return currentTotalMinutes >= startTotalMinutes && 
+                                    currentTotalMinutes < startTotalMinutes + (selectedDuration * 30);
+                            })() : false;
+                            
+                            return (
+                              <div key={i} className="flex flex-col items-center">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                  {formatTime(timeSlot)}
+                                </div>
+                                <div 
+                                  className={`w-10 h-10 rounded-md flex items-center justify-center cursor-pointer ${
+                                    isBlocked
+                                      ? 'bg-red-500 dark:bg-red-600 text-white'
+                                      : isSelected && selectedTime === timeSlot
+                                        ? 'bg-purple-600 dark:bg-purple-700 text-white'
+                                        : isInSelectedRange
+                                          ? 'bg-purple-200 dark:bg-purple-800/60 text-purple-800 dark:text-purple-200'
+                                          : isAvailable
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    if (isBlocked) {
+                                      showBlockInfo(e, person.id, timeSlot);
+                                    } else if (isAvailable && isSelected) {
+                                      if (selectedTime === timeSlot) {
+                                        setSelectedTime('');
+                                      } else {
+                                        setSelectedTime(timeSlot);
+                                        setSelectedDuration(1);
+                                      }
+                                    }
+                                  }}
+                                  title={
+                                    isBlocked 
+                                      ? 'This time slot is booked' 
+                                      : !isAvailable 
+                                        ? 'Staff not available at this time'
+                                        : 'Click to select this time slot'
                                   }
-                                  
-                                  setSelectedTime(time);
-                                  setSelectedDuration(Math.min(selectedDuration, maxDuration));
-                                }
-                              }}
-                            >
-                              {formatTime(time)}
-                            </button>
-                          );
-                        })}
+                                >
+                                  {isBlocked ? (
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                  ) : null}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Legend */}
+                        <div className="mt-2 flex flex-wrap gap-4 text-xs">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-green-100 dark:bg-green-900/30 rounded mr-1"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Available</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-red-500 dark:bg-red-600 rounded mr-1"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Booked</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-purple-600 dark:bg-purple-700 rounded mr-1"></div>
+                            <span className="text-gray-600 dark:text-gray-400">Selected</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {isSelected && (
+                          <>
+                            {getAvailableTimeSlots().map((time, index) => {
+                              // Determine if this slot would be included in selected time range
+                              const isInSelectedRange = selectedTime && selectedDuration > 1 ? (() => {
+                                // Convert selected time to minutes
+                                const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
+                                const startTotalMinutes = startHour * 60 + startMinute;
+                                
+                                // Convert current time slot to minutes
+                                const [timeHour, timeMinute] = time.split(':').map(num => parseInt(num, 10));
+                                const timeTotalMinutes = timeHour * 60 + timeMinute;
+                                
+                                // Check if this slot falls within the selected duration range
+                                return timeTotalMinutes > startTotalMinutes && 
+                                      timeTotalMinutes < startTotalMinutes + (selectedDuration * 30);
+                              })() : false;
+                              
+                              // Check if the time slot is blocked
+                              const isBlocked = blockedSlots[person.id] && blockedSlots[person.id][time];
+                              
+                              return (
+                                <button 
+                                  key={index}
+                                  type="button"
+                                  disabled={isBlocked}
+                                  className={`px-3 py-1 text-xs rounded-full border ${
+                                    isBlocked
+                                      ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 cursor-not-allowed opacity-70'
+                                      : selectedTime === time
+                                        ? 'bg-purple-600 border-purple-500 text-white'
+                                        : isInSelectedRange
+                                          ? 'bg-purple-200 dark:bg-purple-900/50 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300'
+                                          : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    if (isBlocked) {
+                                      showBlockInfo(e, person.id, time);
+                                    } else {
+                                      console.log('Selecting time slot:', time);
+                                      
+                                      // If we're selecting the same time, clear it
+                                      if (selectedTime === time) {
+                                        setSelectedTime('');
+                                        setSelectedDuration(1);
+                                      } else {
+                                        // Check if there's enough consecutive slots available for default duration
+                                        const availableSlots = getAvailableTimeSlots();
+                                        const timeIndex = availableSlots.indexOf(time);
+                                        
+                                        // Set maximum duration based on available consecutive slots
+                                        let maxDuration = 1;
+                                        let nextSlotIndex = timeIndex + 1;
+                                        
+                                        while (
+                                          nextSlotIndex < availableSlots.length && 
+                                          areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
+                                        ) {
+                                          maxDuration++;
+                                          nextSlotIndex++;
+                                        }
+                                        
+                                        setSelectedTime(time);
+                                        setSelectedDuration(Math.min(selectedDuration, maxDuration));
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {formatTime(time)}
+                                  {isBlocked && (
+                                    <span className="ml-1">🔒</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </>
+                        )}
                         
                         {!isSelected && (
                           <div className="flex flex-wrap gap-2">
@@ -221,16 +447,41 @@ export default function BookingStaffAvailability({
                               // Group slots by hour for cleaner display
                               const timeGroups = {};
                               availableSlots.forEach(s => {
-                                const hour = parseInt(s.start_time.split(':')[0], 10);
-                                if (!timeGroups[hour]) timeGroups[hour] = [];
-                                timeGroups[hour].push(s);
+                                const startHour = parseInt(s.start_time.split(':')[0], 10);
+                                const endHour = parseInt(s.end_time.split(':')[0], 10);
+                                const startMinute = parseInt(s.start_time.split(':')[1], 10) || 0;
+                                const endMinute = parseInt(s.end_time.split(':')[1], 10) || 0;
+                                
+                                // Calculate 30-minute slots in this availability block
+                                const startTotalMinutes = startHour * 60 + startMinute;
+                                const endTotalMinutes = endHour * 60 + endMinute;
+                                const numSlots = Math.floor((endTotalMinutes - startTotalMinutes) / 30);
+                                
+                                for (let h = startHour; h <= endHour; h++) {
+                                  if (!timeGroups[h]) timeGroups[h] = 0;
+                                  
+                                  // Count full hours
+                                  if (h > startHour && h < endHour) {
+                                    timeGroups[h] += 2; // 2 slots per hour
+                                  } 
+                                  // Start hour
+                                  else if (h === startHour) {
+                                    timeGroups[h] += startMinute === 0 ? 2 : 1;
+                                  }
+                                  // End hour
+                                  else if (h === endHour) {
+                                    timeGroups[h] += endMinute === 0 ? 0 : 1;
+                                  }
+                                }
                               });
                               
-                              return Object.entries(timeGroups).map(([hour, slots]) => (
-                                <div key={hour} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
-                                  {formatTime(`${hour}:00`)} - {slots.length} slot(s)
-                                </div>
-                              ));
+                              return Object.entries(timeGroups)
+                                .filter(([_, count]) => count > 0)
+                                .map(([hour, count]) => (
+                                  <div key={hour} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                                    {formatTime(`${hour}:00`)} - {count} slot{count !== 1 ? 's' : ''}
+                                  </div>
+                                ));
                             })()}
                           </div>
                         )}
@@ -247,6 +498,79 @@ export default function BookingStaffAvailability({
       ) : (
         <p className="text-gray-600 dark:text-gray-400 text-center py-8">No staff available. Please check back later.</p>
       )}
+      
+      {/* Time block info popup */}
+      {timeBlockInfo && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50" onClick={closeBlockInfo}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Booked Time Slot
+              </h3>
+              <button
+                onClick={closeBlockInfo}
+                className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-4">
+              <div className="flex items-center mb-2">
+                <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mr-3">
+                  <svg className="h-5 w-5 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700 dark:text-gray-300">
+                    {formatTime(timeBlockInfo.time)}
+                  </p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    This time slot is currently booked
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Customer Name:</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{timeBlockInfo.customerName}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Service:</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{timeBlockInfo.service}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Status:</span>
+                <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                  {timeBlockInfo.isActive ? 'In Progress' : 'Scheduled'}
+                </span>
+              </div>
+              {timeBlockInfo.isActive && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Remaining Time:</span>
+                  <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                    {getRemainingTime(timeBlockInfo.startTime)}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={closeBlockInfo}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-} 
+}

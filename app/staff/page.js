@@ -20,16 +20,22 @@ export default function StaffPage() {
   const [success, setSuccess] = useState('');
   const [blockedTimers, setBlockedTimers] = useState({});
 
-  // Generate time slots from 9am to 8pm
+  // Generate time slots from 9am to 8pm with 30-minute intervals
   useEffect(() => {
     const slots = [];
     for (let hour = 9; hour <= 20; hour++) {
-      slots.push({
-        id: `slot-${hour}`,
-        time: `${hour}:00`,
-        displayTime: formatTime(`${hour}:00`),
-        available: true, 
-      });
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Skip 8:30 PM
+        if (hour === 20 && minute === 30) continue;
+        
+        const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
+        slots.push({
+          id: `slot-${hour}-${minute}`,
+          time: timeString,
+          displayTime: formatTime(timeString),
+          available: true, 
+        });
+      }
     }
     setTimeSlots(slots);
   }, []);
@@ -81,9 +87,30 @@ export default function StaffPage() {
         const availabilityMap = {};
         
         staffAvail.forEach(a => {
-          // Extract the hour from start_time (format: "HH:MM:SS")
-          const hour = a.start_time.split(':')[0];
-          availabilityMap[`slot-${hour}`] = a.is_available;
+          // Convert start_time and end_time to minutes for easier comparison
+          const startParts = a.start_time.split(':');
+          const endParts = a.end_time.split(':');
+          
+          const startHour = parseInt(startParts[0], 10);
+          const startMinute = parseInt(startParts[1], 10);
+          const endHour = parseInt(endParts[0], 10);
+          const endMinute = parseInt(endParts[1], 10);
+          
+          const startTotalMinutes = startHour * 60 + startMinute;
+          const endTotalMinutes = endHour * 60 + endMinute;
+          
+          // Mark all 30-minute slots that fall within this availability window
+          for (let hour = 9; hour <= 20; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+              // Skip 8:30 PM
+              if (hour === 20 && minute === 30) continue;
+              
+              const slotTotalMinutes = hour * 60 + minute;
+              if (slotTotalMinutes >= startTotalMinutes && slotTotalMinutes < endTotalMinutes) {
+                availabilityMap[`slot-${hour}-${minute}`] = a.is_available;
+              }
+            }
+          }
         });
         
         // Update time slots with availability
@@ -106,13 +133,12 @@ export default function StaffPage() {
 
   // Format time for display
   function formatTime(timeString) {
-    const [hour] = timeString.split(':');
-    const hourNum = parseInt(hour);
-    return hourNum > 12 
-      ? `${hourNum - 12}:00 PM` 
-      : hourNum === 12 
-        ? '12:00 PM' 
-        : `${hour}:00 AM`;
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const minute = minutes || '00';
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minute} ${period}`;
   }
 
   // Toggle time slot availability with timer for blocked slots
@@ -176,14 +202,50 @@ export default function StaffPage() {
       setUpdating(true);
       setError(null);
       
-      // Format time slots for API
-      const formattedSlots = timeSlots.map(slot => ({
-        start: slot.time,
-        end: slot.time.replace(':00', ':59'),
-        available: slot.available
-      }));
+      // Format time slots for API by grouping consecutive available slots
+      const groupedSlots = [];
+      let currentGroup = null;
       
-      await updateStaffAvailability(selectedStaffId, selectedDate, formattedSlots);
+      // Sort timeSlots by time
+      const sortedSlots = [...timeSlots].sort((a, b) => {
+        const [aHour, aMinute] = a.time.split(':').map(num => parseInt(num, 10));
+        const [bHour, bMinute] = b.time.split(':').map(num => parseInt(num, 10));
+        
+        const aTotalMinutes = aHour * 60 + (aMinute || 0);
+        const bTotalMinutes = bHour * 60 + (bMinute || 0);
+        
+        return aTotalMinutes - bTotalMinutes;
+      });
+      
+      // Group consecutive slots with the same availability
+      sortedSlots.forEach(slot => {
+        const [hour, minute] = slot.time.split(':').map(num => parseInt(num, 10));
+        const endHour = minute === 30 ? hour + 1 : hour;
+        const endMinute = minute === 30 ? '00' : '30';
+        
+        if (!currentGroup || currentGroup.available !== slot.available) {
+          // Start a new group
+          if (currentGroup) {
+            groupedSlots.push(currentGroup);
+          }
+          
+          currentGroup = {
+            start: slot.time,
+            end: `${endHour}:${endMinute}`,
+            available: slot.available
+          };
+        } else {
+          // Extend the current group
+          currentGroup.end = `${endHour}:${endMinute}`;
+        }
+      });
+      
+      // Add the last group
+      if (currentGroup) {
+        groupedSlots.push(currentGroup);
+      }
+      
+      await updateStaffAvailability(selectedStaffId, selectedDate, groupedSlots);
       
       setSuccess('Staff availability updated successfully');
       setTimeout(() => setSuccess(''), 3000);
@@ -322,7 +384,7 @@ export default function StaffPage() {
                         Toggle the time slots to mark when the staff member is available.
                       </p>
                       
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {timeSlots.map((slot) => {
                           const isLocked = !slot.available && blockedTimers[slot.id];
                           return (
