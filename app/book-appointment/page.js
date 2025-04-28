@@ -1023,16 +1023,6 @@ export default function BookAppointment() {
                     </div>
                   </div>
                 )}
-                
-                <div className="mt-8 flex justify-end">
-                  <button 
-                    type="submit" 
-                    className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50"
-                    disabled={loading || (pendingAppointments.length === 0 && selectedServices.length === 0)}
-                  >
-                    {loading ? 'Booking...' : 'Book Appointment'}
-                  </button>
-                </div>
               </form>
             </div>
             
@@ -1058,6 +1048,17 @@ export default function BookAppointment() {
                 formatDuration={formatDuration}
                 getEndTimeFromDuration={getEndTimeFromDuration}
               />
+            </div>
+            
+            {/* Book Appointment Button at bottom of page */}
+            <div className="mt-8 flex justify-center">
+              <button 
+                onClick={handleSubmit}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 text-lg"
+                disabled={loading || (pendingAppointments.length === 0 && selectedServices.length === 0)}
+              >
+                {loading ? 'Booking...' : 'Book Appointment'}
+              </button>
             </div>
           </>
         )}
