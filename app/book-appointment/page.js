@@ -736,12 +736,7 @@ export default function BookAppointment() {
               >
                 Book Another Appointment
               </button>
-              <button 
-                onClick={handlePrintInvoice} 
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-              >
-                Print Invoice
-              </button>
+              
             </div>
           </div>
         ) : (
