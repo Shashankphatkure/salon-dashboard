@@ -17,7 +17,6 @@ const CustomersList = () => {
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     phone: '',
-    email: '',
     birthdate: '',
     gender: '',
     address: '',
@@ -42,7 +41,6 @@ const CustomersList = () => {
         id: customer.id,
         name: customer.name,
         phone: customer.phone,
-        email: customer.email,
         birthdate: customer.birthdate,
         gender: customer.gender,
         address: customer.address,
@@ -87,7 +85,6 @@ const CustomersList = () => {
     setNewCustomer({
       name: '',
       phone: '',
-      email: '',
       birthdate: '',
       gender: '',
       address: '',
@@ -120,7 +117,6 @@ const CustomersList = () => {
           .update({
             name: selectedCustomer.name,
             phone: selectedCustomer.phone,
-            email: selectedCustomer.email,
             birthdate: selectedCustomer.birthdate,
             gender: selectedCustomer.gender,
             address: selectedCustomer.address,
@@ -139,7 +135,6 @@ const CustomersList = () => {
           .insert({
             name: newCustomer.name,
             phone: newCustomer.phone,
-            email: newCustomer.email,
             birthdate: newCustomer.birthdate,
             gender: newCustomer.gender,
             address: newCustomer.address,
@@ -210,7 +205,6 @@ const CustomersList = () => {
     .filter(customer => 
       customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone?.includes(searchQuery) ||
-      customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.membershipType?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -231,7 +225,7 @@ const CustomersList = () => {
           <input 
             type="text" 
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-            placeholder="Search customers by name, phone, email or membership..."
+            placeholder="Search customers by name, phone, or membership..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -424,19 +418,6 @@ const CustomersList = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={selectedCustomer ? selectedCustomer.email : newCustomer.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter email"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Birth Date
                   </label>
                   <input
@@ -586,10 +567,6 @@ const CustomersList = () => {
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
                     <p className="text-base font-medium text-gray-800 dark:text-white">{selectedCustomer.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Email Address</p>
-                    <p className="text-base font-medium text-gray-800 dark:text-white">{selectedCustomer.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Birth Date</p>
