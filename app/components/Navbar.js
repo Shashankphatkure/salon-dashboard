@@ -19,6 +19,7 @@ export default function Navbar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/invoice', label: 'Invoice' },
     { href: '/products', label: 'Products' },
+    { href: '/sales', label: 'Sales' },
     { href: '/reports', label: 'Reports' }
   ];
   
