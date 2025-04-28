@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import BookingStaffAvailability from '../components/BookingStaffAvailability';
 import { useAuth } from '../../lib/auth';
+import { useRouter } from 'next/navigation';
 import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers, createCustomer } from '../../lib/db';
 
 export default function BookAppointment() {
   const { user } = useAuth();
+  const router = useRouter();
   const [services, setServices] = useState([]);
   const [staff, setStaff] = useState([]);
   const [staffAvailability, setStaffAvailability] = useState([]);
@@ -1035,6 +1037,14 @@ export default function BookAppointment() {
                     disabled={loading || (pendingAppointments.length === 0 && selectedServices.length === 0)}
                   >
                     {loading ? 'Booking...' : 'Book Appointment'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push('/sales')}
+                    className="ml-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50"
+                  >
+                    Sales
                   </button>
                 </div>
               </form>

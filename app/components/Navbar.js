@@ -11,6 +11,7 @@ export default function Navbar() {
   const menuItems = [
     { href: '/', label: 'Home' },
     { href: '/book-appointment', label: 'Book An Appointment' },
+    { href: '/sales', label: 'Sales' },
     { href: '/services', label: 'Service' },
     { href: '/staff', label: 'Staff' },
     { href: '/customers', label: 'Customers' },
@@ -19,7 +20,6 @@ export default function Navbar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/invoice', label: 'Invoice' },
     { href: '/products', label: 'Products' },
-    { href: '/sales', label: 'Sales' },
     { href: '/reports', label: 'Reports' }
   ];
   
