@@ -212,7 +212,7 @@ const StaffList = () => {
       
       {/* Staff Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {staff.length > 0 ? (
+        {staff && staff.length > 0 ? (
           staff.map((staffMember) => (
             <div key={staffMember.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-transform hover:scale-105">
               <div className="p-6">

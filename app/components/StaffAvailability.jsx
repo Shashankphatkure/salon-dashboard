@@ -5,8 +5,8 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { format } from 'date-fns';
 
 export default function StaffAvailability({
-  staff,
-  staffAvailability,
+  staff = [],
+  staffAvailability = [],
   selectedDate,
   selectedStaff,
   setSelectedStaff,
@@ -85,7 +85,7 @@ export default function StaffAvailability({
 
   return (
     <div className="mt-4">
-      {staff.length > 0 ? (
+      {staff && staff.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {staff.map(person => {
             const isSelected = selectedStaff && selectedStaff.id === person.id;

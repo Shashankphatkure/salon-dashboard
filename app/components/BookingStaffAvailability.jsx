@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 
 export default function BookingStaffAvailability({
-  staff,
-  staffAvailability,
+  staff = [],
+  staffAvailability = [],
   selectedDate,
   selectedStaff,
   setSelectedStaff,
@@ -47,7 +47,7 @@ export default function BookingStaffAvailability({
 
   return (
     <div className="mt-4">
-      {staff.length > 0 ? (
+      {staff && staff.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {staff.map(person => {
             const isSelected = selectedStaff && selectedStaff.id === person.id;

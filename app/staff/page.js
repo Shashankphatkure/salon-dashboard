@@ -10,7 +10,7 @@ export default function StaffPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [staff, setStaff] = useState([]);
-  const [staffAvailability, setStaffAvailability] = useState({});
+  const [staffAvailability, setStaffAvailability] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
@@ -47,9 +47,9 @@ export default function StaffPage() {
         
         // Fetch staff members
         const staffData = await getStaff();
-        setStaff(staffData);
+        setStaff(staffData || []);
         
-        if (staffData.length > 0 && !selectedStaffId) {
+        if (staffData && staffData.length > 0 && !selectedStaffId) {
           setSelectedStaffId(staffData[0].id);
         }
         
@@ -64,7 +64,7 @@ export default function StaffPage() {
     if (user) {
       fetchStaffData();
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, selectedStaffId]);
 
   // Fetch staff availability when date or selected staff changes
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function StaffPage() {
         const availabilityData = await getStaffAvailability(selectedDate);
         
         // Filter availability for selected staff
-        const staffAvail = availabilityData.filter(a => a.staff_id === selectedStaffId);
+        const staffAvail = availabilityData ? availabilityData.filter(a => a.staff_id === selectedStaffId) : [];
         
         // Create a map of time slots to availability
         const availabilityMap = {};
@@ -94,7 +94,7 @@ export default function StaffPage() {
           }))
         );
         
-        setStaffAvailability(availabilityMap);
+        setStaffAvailability(availabilityData || []);
       } catch (err) {
         console.error('Error fetching staff availability:', err);
         setError('Failed to load staff availability. Please try again.');
@@ -388,7 +388,7 @@ export default function StaffPage() {
             </div>
             
             {/* Staff Details */}
-            {selectedStaffId && (
+            {selectedStaffId && staff && staff.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mt-6">
                 <div className="p-6">
                   <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
