@@ -20,7 +20,6 @@ export default function BookAppointment() {
   const [selectedDuration, setSelectedDuration] = useState(1); // Default 1 = 30 minutes (1 slot)
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -71,7 +70,7 @@ export default function BookAppointment() {
     
     // Prefill user email if logged in
     if (user) {
-      setCustomerEmail(user.email);
+      // Email prefill removed
     }
   }, [user]);
 
@@ -109,15 +108,13 @@ export default function BookAppointment() {
     setSelectedCustomer(customer);
     setCustomerName(customer.name);
     setCustomerPhone(customer.phone);
-    setCustomerEmail(customer.email || '');
     setShowCustomerSearch(false);
   };
 
   // Filter customers based on search query
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-    customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-    (customer.email && customer.email.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+    customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase())
   );
 
   // Handle radio button change for customer type
@@ -129,7 +126,6 @@ export default function BookAppointment() {
       setSelectedCustomer(null);
       setCustomerName('');
       setCustomerPhone('');
-      setCustomerEmail(user?.email || '');
     }
   };
 
@@ -220,7 +216,6 @@ export default function BookAppointment() {
           const currentDate = new Date().toISOString().split('T')[0];
           const newCustomer = {
             name: customerName,
-            email: customerEmail,
             phone: customerPhone,
             join_date: currentDate,
             last_visit: currentDate
@@ -576,7 +571,6 @@ export default function BookAppointment() {
               <h3>BILL TO:</h3>
               <div>${appointmentCustomer?.name || 'Guest Customer'}</div>
               <div>${appointmentCustomer?.phone || ''}</div>
-              <div>${appointmentCustomer?.email || ''}</div>
             </div>
           </div>
           
@@ -816,7 +810,7 @@ export default function BookAppointment() {
                                   >
                                     <div className="font-medium text-gray-800 dark:text-white">{customer.name}</div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                      {customer.phone}{customer.email ? ` • ${customer.email}` : ''}
+                                      {customer.phone}
                                     </div>
                                   </div>
                                 ))
@@ -835,11 +829,6 @@ export default function BookAppointment() {
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {selectedCustomer.phone}
                             </div>
-                            {selectedCustomer.email && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {selectedCustomer.email}
-                              </div>
-                            )}
                             {selectedCustomer.membership_type && (
                               <div className="mt-1">
                                 <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full">
@@ -860,18 +849,6 @@ export default function BookAppointment() {
                             onChange={(e) => setCustomerName(e.target.value)}
                             className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             placeholder="Your full name"
-                            required
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                          <input 
-                            type="email" 
-                            value={customerEmail}
-                            onChange={(e) => setCustomerEmail(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            placeholder="Your email address"
                             required
                           />
                         </div>
@@ -1038,8 +1015,6 @@ export default function BookAppointment() {
                   >
                     {loading ? 'Booking...' : 'Book Appointment'}
                   </button>
-
-                  
                 </div>
               </form>
             </div>
