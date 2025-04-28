@@ -926,9 +926,7 @@ export default function BookAppointment() {
                             <div className="ml-3 flex-1">
                               <h4 className="font-medium text-gray-700 dark:text-gray-300">{service.name}</h4>
                               <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                  {service.duration_minutes} min
-                                </span>
+                                
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                   ₹{parseFloat(service.price).toLocaleString()}
                                 </span>
