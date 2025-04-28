@@ -317,7 +317,7 @@ export default function Dashboard() {
           </Link>
           
           {/* Services Card */}
-          <Link href="/service" className="block">
+          <Link href="/services" className="block">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
               <div className="flex items-center mb-3">
                 <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center mr-3">
