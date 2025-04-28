@@ -319,7 +319,6 @@ const CustomersList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-white">{customer.phone}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{customer.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
