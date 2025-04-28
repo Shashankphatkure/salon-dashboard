@@ -13,7 +13,7 @@ import {
   getStaff,
   getUserMembership,
   getMembershipPlans,
-  getSalesReport,
+  getFilteredAppointments,
   updateAppointment 
 } from '../../lib/db';
 
@@ -105,15 +105,27 @@ export default function Dashboard() {
         
         // Fetch service stats
         const servicesData = await getServices();
-        const bookedServices = await getSalesReport(
-          new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString().split('T')[0],
-          new Date().toISOString().split('T')[0]
-        );
+        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString().split('T')[0];
+        const endDate = new Date().toISOString().split('T')[0];
         
-        setServices({ 
-          total: servicesData.length, 
-          booked: bookedServices.reduce((acc, item) => acc + (item.service_count || 0), 0)
-        });
+        try {
+          const recentBookings = await getFilteredAppointments({
+            p_date_from: startDate,
+            p_date_to: endDate,
+            p_status: 'completed'
+          });
+          
+          setServices({ 
+            total: servicesData.length, 
+            booked: recentBookings ? recentBookings.reduce((acc, booking) => acc + (booking.service_count || 0), 0) : 0
+          });
+        } catch (err) {
+          console.error('Error fetching booked services:', err);
+          setServices({ 
+            total: servicesData.length, 
+            booked: 0
+          });
+        }
         
         // Fetch recent activity
         const recentAppointments = appointmentsData.slice(0, 3);
