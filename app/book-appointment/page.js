@@ -238,13 +238,20 @@ export default function BookAppointment() {
       
       // Add current selection if it has all required fields
       if (selectedServices.length > 0 && selectedStaff && selectedTime) {
-        // Calculate end time based on service duration (assume 30 min per service for now)
-        const startHour = parseInt(selectedTime.split(':')[0], 10);
+        // Calculate end time based on service duration (now in 30-min intervals)
+        const [startHour, startMinute] = selectedTime.split(':').map(num => parseInt(num, 10));
         const servicesDuration = selectedServices.reduce((total, service) => {
           return total + (service.duration_minutes || 30);
         }, 0);
-        const endHour = startHour + Math.ceil(servicesDuration / 60);
-        const endTime = `${endHour}:00`;
+        
+        // Calculate end time in minutes
+        const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+        const endTotalMinutes = startTotalMinutes + servicesDuration;
+        
+        // Convert back to hours and minutes
+        const endHour = Math.floor(endTotalMinutes / 60);
+        const endMinute = endTotalMinutes % 60;
+        const endTime = `${endHour}:${endMinute === 0 ? '00' : endMinute}`;
         
         appointments.push({
           customer_id: customerId,
@@ -266,12 +273,19 @@ export default function BookAppointment() {
       // Add all pending appointments
       pendingAppointments.forEach(pending => {
         // Calculate end time based on service duration
-        const startHour = parseInt(pending.time.split(':')[0], 10);
+        const [startHour, startMinute] = pending.time.split(':').map(num => parseInt(num, 10));
         const servicesDuration = pending.services.reduce((total, service) => {
           return total + (service.duration_minutes || 30);
         }, 0);
-        const endHour = startHour + Math.ceil(servicesDuration / 60);
-        const endTime = `${endHour}:00`;
+        
+        // Calculate end time in minutes
+        const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+        const endTotalMinutes = startTotalMinutes + servicesDuration;
+        
+        // Convert back to hours and minutes
+        const endHour = Math.floor(endTotalMinutes / 60);
+        const endMinute = endTotalMinutes % 60;
+        const endTime = `${endHour}:${endMinute === 0 ? '00' : endMinute}`;
         
         appointments.push({
           customer_id: customerId,
@@ -353,7 +367,7 @@ export default function BookAppointment() {
     const hour = parseInt(hours, 10);
     const suffix = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${suffix}`;
+    return `${displayHour}:${minutes === '00' ? '00' : minutes} ${suffix}`;
   };
 
   // Generate available time slots for selected staff
@@ -372,17 +386,31 @@ export default function BookAppointment() {
     
     const timeSlots = [];
     
-    // Generate time slots from 9am to 8pm
+    // Generate time slots from 9am to 8pm in 30-minute intervals
     for (let hour = 9; hour <= 20; hour++) {
-      const timeString = `${hour}:00`;
-      const isAvailable = staffSlots.some(slot => {
-        const slotStart = parseInt(slot.start_time.split(':')[0], 10);
-        const slotEnd = parseInt(slot.end_time.split(':')[0], 10);
-        return hour >= slotStart && hour < slotEnd;
-      });
-      
-      if (isAvailable) {
-        timeSlots.push(timeString);
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Skip 8:30 PM slot
+        if (hour === 20 && minute === 30) continue;
+        
+        const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
+        
+        const isAvailable = staffSlots.some(slot => {
+          // Parse time values into minutes for easier comparison
+          const slotStartHour = parseInt(slot.start_time.split(':')[0], 10);
+          const slotStartMinute = parseInt(slot.start_time.split(':')[1], 10);
+          const slotEndHour = parseInt(slot.end_time.split(':')[0], 10);
+          const slotEndMinute = parseInt(slot.end_time.split(':')[1], 10);
+          
+          const slotStartTime = slotStartHour * 60 + slotStartMinute;
+          const slotEndTime = slotEndHour * 60 + slotEndMinute;
+          const currentTime = hour * 60 + minute;
+          
+          return currentTime >= slotStartTime && currentTime < slotEndTime;
+        });
+        
+        if (isAvailable) {
+          timeSlots.push(timeString);
+        }
       }
     }
     
@@ -999,11 +1027,21 @@ export default function BookAppointment() {
                                 </button>
                               ))}
                               
-                              {!isSelected && availableSlots.map((slot, index) => (
-                                <div key={index} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
-                                  {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                                </div>
-                              ))}
+                              {!isSelected && availableSlots.map((slot, index) => {
+                                // Group slots by hour for cleaner display
+                                const timeGroups = {};
+                                availableSlots.forEach(s => {
+                                  const hour = parseInt(s.start_time.split(':')[0], 10);
+                                  if (!timeGroups[hour]) timeGroups[hour] = [];
+                                  timeGroups[hour].push(s);
+                                });
+                                
+                                return Object.entries(timeGroups).map(([hour, slots]) => (
+                                  <div key={hour} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                                    {formatTime(`${hour}:00`)} - {slots.length * 2} slots
+                                  </div>
+                                ));
+                              })}
                             </div>
                           ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">No availability for selected date</p>
