@@ -20,7 +20,8 @@ const CustomersList = () => {
     birthdate: '',
     gender: '',
     address: '',
-    membershipType: 'None'
+    membershipType: 'None',
+    anniversary: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -48,7 +49,8 @@ const CustomersList = () => {
         lastVisit: customer.last_visit,
         membershipType: customer.membership_type,
         totalSpent: customer.total_spent,
-        visits: customer.visits
+        visits: customer.visits,
+        anniversary: customer.anniversary
       })));
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -88,7 +90,8 @@ const CustomersList = () => {
       birthdate: '',
       gender: '',
       address: '',
-      membershipType: 'None'
+      membershipType: 'None',
+      anniversary: ''
     });
     setIsModalOpen(true);
   };
@@ -120,6 +123,7 @@ const CustomersList = () => {
             birthdate: selectedCustomer.birthdate,
             gender: selectedCustomer.gender,
             address: selectedCustomer.address,
+            anniversary: selectedCustomer.anniversary,
             updated_at: new Date()
           })
           .eq('id', selectedCustomer.id);
@@ -138,6 +142,7 @@ const CustomersList = () => {
             birthdate: newCustomer.birthdate,
             gender: newCustomer.gender,
             address: newCustomer.address,
+            anniversary: newCustomer.anniversary,
             membership_type: newCustomer.membershipType || 'None',
             join_date: today,
             last_visit: today,
@@ -430,6 +435,18 @@ const CustomersList = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Anniversary Date
+                  </label>
+                  <input
+                    type="date"
+                    name="anniversary"
+                    value={selectedCustomer ? selectedCustomer.anniversary : newCustomer.anniversary}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Gender
                   </label>
                   <select
@@ -572,6 +589,12 @@ const CustomersList = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400">Birth Date</p>
                     <p className="text-base font-medium text-gray-800 dark:text-white">
                       {selectedCustomer.birthdate ? new Date(selectedCustomer.birthdate).toLocaleDateString() : 'Not provided'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Anniversary</p>
+                    <p className="text-base font-medium text-gray-800 dark:text-white">
+                      {selectedCustomer.anniversary ? new Date(selectedCustomer.anniversary).toLocaleDateString() : 'Not provided'}
                     </p>
                   </div>
                   <div>
