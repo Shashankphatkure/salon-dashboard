@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import SalonLayout from '../../../components/SalonLayout';
 import { useAuth } from '../../../../lib/auth';
-import { getServices, getStaffById, updateStaff } from '../../../../lib/db';
+import { getStaffById, updateStaff } from '../../../../lib/db';
 
 export default function EditStaffPage({ params }) {
   // Unwrap the params using React.use()
@@ -18,11 +18,9 @@ export default function EditStaffPage({ params }) {
     name: '',
     phone: '',
     bio: '',
-    is_available: true,
-    services: []
+    is_available: true
   });
   
-  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -53,15 +51,8 @@ export default function EditStaffPage({ params }) {
           name: staffData.name || '',
           phone: staffData.phone || '',
           bio: staffData.bio || '',
-          is_available: staffData.is_available !== false,
-          services: staffData.services?.map(service => 
-            typeof service === 'object' ? service.id : service
-          ) || []
+          is_available: staffData.is_available !== false
         });
-        
-        // Fetch services
-        const servicesData = await getServices();
-        setServices(servicesData);
         
         setLoading(false);
       } catch (err) {
@@ -88,24 +79,6 @@ export default function EditStaffPage({ params }) {
       setFormData({
         ...formData,
         [name]: value
-      });
-    }
-  };
-  
-  const handleServiceToggle = (serviceId) => {
-    const isSelected = formData.services.includes(serviceId);
-    
-    if (isSelected) {
-      // Remove service
-      setFormData({
-        ...formData,
-        services: formData.services.filter(id => id !== serviceId)
-      });
-    } else {
-      // Add service
-      setFormData({
-        ...formData,
-        services: [...formData.services, serviceId]
       });
     }
   };
@@ -239,37 +212,6 @@ export default function EditStaffPage({ params }) {
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Add a short biography for this staff member..."
                   ></textarea>
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2">
-                    Services
-                  </label>
-                  <div className="border border-gray-300 dark:border-gray-700 rounded-md p-3 max-h-64 overflow-y-auto bg-white dark:bg-gray-700">
-                    {services.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {services.map((service) => (
-                          <div key={service.id} className="flex items-center">
-                            <input
-                              id={`service-${service.id}`}
-                              type="checkbox"
-                              checked={formData.services.includes(service.id)}
-                              onChange={() => handleServiceToggle(service.id)}
-                              className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                            />
-                            <label 
-                              htmlFor={`service-${service.id}`} 
-                              className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-                            >
-                              {service.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">No services available.</p>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
