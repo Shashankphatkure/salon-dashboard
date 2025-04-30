@@ -294,10 +294,6 @@ export default function AppointmentDetailPage({ params }) {
                       <span className="text-gray-500 dark:text-gray-400">Phone:</span>
                       <p className="font-medium text-gray-800 dark:text-white">{appointment.customers?.phone || 'N/A'}</p>
                     </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Email:</span>
-                      <p className="font-medium text-gray-800 dark:text-white">{appointment.customers?.email || 'N/A'}</p>
-                    </div>
                   </div>
                 </div>
               </div>
