@@ -103,7 +103,7 @@ export default function UserMenu() {
                     role="menuitem"
                     onClick={() => setIsOpen(false)}
                   >
-                    My Membership
+                    Memberships
                   </span>
                 </Link>
                 <div className="border-t border-gray-100 dark:border-gray-700"></div>
