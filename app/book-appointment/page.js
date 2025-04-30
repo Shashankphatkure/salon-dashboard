@@ -268,6 +268,7 @@ export default function BookAppointment() {
           end_time: endTime,
           staff_id: selectedStaff.id,
           total_price: appointmentTotal,
+          total_amount: appointmentTotal,
           status: 'pending',
           // Services will be handled separately after appointment creation
           _services: selectedServices.map(service => ({
@@ -302,6 +303,7 @@ export default function BookAppointment() {
           end_time: endTime,
           staff_id: pending.staff.id,
           total_price: pending.total,
+          total_amount: pending.total,
           status: 'pending',
           // Services will be handled separately after appointment creation
           _services: pending.services.map(service => ({
@@ -324,7 +326,7 @@ export default function BookAppointment() {
         delete appointment._services;
         
         // Create the appointment
-        const result = await createAppointment(appointment);
+        const result = await createAppointment(appointment, servicesToInsert);
         console.log('✅ Appointment created successfully:', result);
         
         // Store the created appointment with its services for the invoice
@@ -340,13 +342,6 @@ export default function BookAppointment() {
           }),
           staff: staff.find(s => s.id === result.staff_id) || { name: 'Staff' }
         });
-        
-        // Now handle service associations if needed
-        if (servicesToInsert.length > 0 && result.id) {
-          console.log('🔍 Creating appointment services for:', result.id);
-          // This would be handled by the createAppointment function internally
-          // or could be a separate function to insert into appointment_services table
-        }
       }
       
       // Save appointment results for the invoice
