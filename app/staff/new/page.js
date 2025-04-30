@@ -12,7 +12,6 @@ export default function NewStaffPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     role: '',
     bio: '',
@@ -88,8 +87,8 @@ export default function NewStaffPage() {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.email || !formData.role) {
-      setError('Please fill in all required fields (Name, Email, and Role)');
+    if (!formData.name || !formData.role) {
+      setError('Please fill in all required fields (Name and Role)');
       return;
     }
     
@@ -154,21 +153,6 @@ export default function NewStaffPage() {
                     name="name"
                     type="text"
                     value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="email">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
                     onChange={handleChange}
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     required
