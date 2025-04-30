@@ -41,7 +41,7 @@ export default function EditStaffPage({ params }) {
         const staffData = await getStaffById(id);
         
         if (!staffData) {
-          setError('Staff member not found');
+          setError('Operator not found');
           setLoading(false);
           return;
         }
@@ -100,11 +100,11 @@ export default function EditStaffPage({ params }) {
       
       await updateStaff(id, formData);
       
-      setSuccess('Staff member updated successfully');
+      setSuccess('Operator updated successfully');
       setSubmitting(false);
     } catch (err) {
-      console.error('Error updating staff:', err);
-      setError('Failed to update staff member. Please try again.');
+      console.error('Error updating operator:', err);
+      setError('Failed to update operator. Please try again.');
       setSuccess(null);
       setSubmitting(false);
     }
@@ -134,7 +134,7 @@ export default function EditStaffPage({ params }) {
                 <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Edit Staff Member</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Edit Operator</h1>
           </div>
           
           {error && (
@@ -192,7 +192,7 @@ export default function EditStaffPage({ params }) {
                     className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
                   <label className="ml-2 block text-gray-700 dark:text-gray-300" htmlFor="is_available">
-                    Available for appointments
+                    Operator is available for appointments
                   </label>
                 </div>
               </div>
@@ -208,9 +208,9 @@ export default function EditStaffPage({ params }) {
                     name="bio"
                     value={formData.bio}
                     onChange={handleChange}
-                    rows="4"
+                    rows="5"
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Add a short biography for this staff member..."
+                    placeholder="Tell us about this operator..."
                   ></textarea>
                 </div>
               </div>
@@ -219,9 +219,8 @@ export default function EditStaffPage({ params }) {
             <div className="mt-8 flex justify-end space-x-3">
               <button
                 type="button"
+                onClick={() => router.push(`/staff/${id}`)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
-                onClick={() => router.push('/staff')}
-                disabled={submitting}
               >
                 Cancel
               </button>

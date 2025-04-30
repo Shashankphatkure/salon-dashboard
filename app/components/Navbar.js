@@ -13,7 +13,7 @@ export default function Navbar() {
     { href: '/book-appointment', label: 'Book An Appointment' },
     { href: '/sales', label: 'Sales' },
     { href: '/services', label: 'Service' },
-    { href: '/staff', label: 'Staff' },
+    { href: '/staff', label: 'Operator' },
     { href: '/customers', label: 'Customers' },
     { href: '/membership', label: 'Membership' },
     { href: '/credit', label: 'Credit' },

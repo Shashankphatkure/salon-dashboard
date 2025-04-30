@@ -101,8 +101,8 @@ export default function NewStaffPage() {
       // Redirect to staff page on success
       router.push('/staff');
     } catch (err) {
-      console.error('Error creating staff:', err);
-      setError('Failed to create staff member. Please try again.');
+      console.error('Error creating operator:', err);
+      setError('Failed to create operator. Please try again.');
       setSubmitting(false);
     }
   };
@@ -131,7 +131,7 @@ export default function NewStaffPage() {
                 <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Add New Staff Member</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Add New Operator</h1>
           </div>
           
           {error && (
@@ -212,7 +212,7 @@ export default function NewStaffPage() {
                     onChange={handleChange}
                     rows="4"
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Add a short biography for this staff member..."
+                    placeholder="Add a short biography for this operator..."
                   ></textarea>
                 </div>
                 
@@ -257,28 +257,43 @@ export default function NewStaffPage() {
                     className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
                   <label className="ml-2 block text-gray-700 dark:text-gray-300" htmlFor="is_available">
-                    Available for appointments
+                    Operator is available for appointments
                   </label>
                 </div>
               </div>
             </div>
             
-            <div className="mt-8 flex justify-end space-x-3">
-              <button
-                type="button"
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
-                onClick={() => router.push('/staff')}
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={submitting}
-              >
-                {submitting ? 'Creating...' : 'Create Staff Member'}
-              </button>
+            <div className="mt-8 flex justify-between items-center">
+              <div className="flex items-center">
+                <input
+                  id="is_available"
+                  name="is_available"
+                  type="checkbox"
+                  checked={formData.is_available}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                />
+                <label htmlFor="is_available" className="ml-2 block text-gray-700 dark:text-gray-300">
+                  Operator is available for appointments
+                </label>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push('/staff')}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Creating...' : 'Create Operator'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

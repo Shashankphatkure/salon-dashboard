@@ -180,9 +180,9 @@ export default function BookingStaffAvailability({
                     : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 }`}
                 onClick={() => {
-                  console.log('Selecting staff:', person.name);
+                  console.log('Selecting operator:', person.name);
                   setSelectedStaff(person);
-                  // Reset selected time when switching staff
+                  // Reset selected time when switching operator
                   setSelectedTime('');
                   setSelectedDuration(1);
                 }}
@@ -195,7 +195,7 @@ export default function BookingStaffAvailability({
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-800 dark:text-white">{person.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{person.role || 'Staff'}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{person.role || 'Operator'}</p>
                   </div>
                   <div className="ml-auto">
                     {availableSlots.length > 0 ? (
@@ -436,7 +436,7 @@ export default function BookingStaffAvailability({
           })}
         </div>
       ) : (
-        <p className="text-gray-600 dark:text-gray-400 text-center py-8">No staff available. Please check back later.</p>
+        <p className="text-gray-600 dark:text-gray-400 text-center py-8">No operators available. Please check back later.</p>
       )}
       
       {/* Time block info popup */}
@@ -445,7 +445,7 @@ export default function BookingStaffAvailability({
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Booked Time Slot
+                Operator Booking Details
               </h3>
               <button
                 onClick={closeBlockInfo}

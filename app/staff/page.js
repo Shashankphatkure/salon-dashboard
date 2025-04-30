@@ -275,12 +275,12 @@ export default function StaffPage() {
       
       <main className="container mx-auto py-10 px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Staff Management</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Operator Management</h1>
           <button 
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
             onClick={() => router.push('/staff/new')}
           >
-            Add New Staff
+            Add New Operator
           </button>
         </div>
         
@@ -296,13 +296,13 @@ export default function StaffPage() {
           </div>
         )}
         
-        {/* Staff List */}
+        {/* Operator List */}
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Staff Cards */}
+          {/* Operator Cards */}
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
               <div className="p-6">
-                <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Staff Members</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Operators</h2>
                 
                 {staff.length > 0 ? (
                   <div className="space-y-3">
@@ -343,12 +343,12 @@ export default function StaffPage() {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">No staff members found.</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">No operators found.</p>
                     <button 
                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm"
                       onClick={() => router.push('/staff/new')}
                     >
-                      Add Staff Member
+                      Add Operator
                     </button>
                   </div>
                 )}
@@ -356,12 +356,12 @@ export default function StaffPage() {
             </div>
           </div>
           
-          {/* Staff Availability Management */}
+          {/* Operator Availability Management */}
           <div className="md:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
               <div className="p-6">
                 <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
-                  Staff Availability
+                  Operator Availability
                 </h2>
                 
                 {selectedStaffId ? (
@@ -378,10 +378,10 @@ export default function StaffPage() {
                     
                     <div className="mb-6">
                       <h3 className="text-md font-medium text-gray-800 dark:text-white mb-3">
-                        Available Time Slots for {staff.find(s => s.id === selectedStaffId)?.name || 'Selected Staff'}
+                        Available Time Slots for {staff.find(s => s.id === selectedStaffId)?.name || 'Selected Operator'}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Toggle the time slots to mark when the staff member is available.
+                        Toggle the time slots to mark when the operator is available.
                       </p>
                       
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -442,19 +442,19 @@ export default function StaffPage() {
                 ) : (
                   <div className="text-center py-10">
                     <p className="text-gray-600 dark:text-gray-400">
-                      Select a staff member to manage their availability.
+                      Select an operator to manage their availability.
                     </p>
                   </div>
                 )}
               </div>
             </div>
             
-            {/* Staff Details */}
+            {/* Operator Details */}
             {selectedStaffId && staff && staff.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mt-6">
                 <div className="p-6">
                   <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
-                    Staff Details
+                    Operator Details
                   </h2>
                   
                   {staff.find(s => s.id === selectedStaffId) && (
@@ -482,7 +482,7 @@ export default function StaffPage() {
                           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
                           onClick={() => router.push(`/staff/edit/${selectedStaffId}`)}
                         >
-                          Edit Staff
+                          Edit Operator
                         </button>
                       </div>
                     </>

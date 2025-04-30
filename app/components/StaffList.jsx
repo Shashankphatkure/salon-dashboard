@@ -60,8 +60,8 @@ const StaffList = () => {
         
         setStaff(data || []);
       } catch (error) {
-        console.error('Error fetching staff:', error);
-        setError('Failed to load staff data. Please try again.');
+        console.error('Error fetching operators:', error);
+        setError('Failed to load operator data. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -166,8 +166,8 @@ const StaffList = () => {
       setIsModalOpen(false);
       
     } catch (error) {
-      console.error('Error saving staff:', error);
-      setError('Error saving staff member. Please try again.');
+      console.error('Error saving operator:', error);
+      setError('Error saving operator. Please try again.');
     }
   };
 
@@ -203,8 +203,8 @@ const StaffList = () => {
       setStaffToDelete(null);
       
     } catch (error) {
-      console.error('Error deleting staff:', error);
-      setError('Error deleting staff member. Please try again.');
+      console.error('Error deleting operator:', error);
+      setError('Error deleting operator. Please try again.');
     }
   };
 
@@ -268,7 +268,7 @@ const StaffList = () => {
         </div>
       )}
       
-      {/* Add Staff Button */}
+      {/* Add Operator Button */}
       <div className="flex justify-end">
         <button 
           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg flex items-center gap-2"
@@ -277,19 +277,19 @@ const StaffList = () => {
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          Add Staff Member
+          Add Operator
         </button>
       </div>
       
-      {/* Staff Availability Box Table */}
+      {/* Operator Availability Box Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8">
         <div className="p-6">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Staff Availability</h3>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Operator Availability</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-100 dark:bg-gray-700">
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Staff Name</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Operator Name</th>
                   {timeSlots.slice(0, 8).map((time, index) => (
                     <th key={index} className="py-3 px-2 text-center text-xs font-medium text-gray-700 dark:text-gray-300">
                       {formatTime(time)}
@@ -334,7 +334,7 @@ const StaffList = () => {
         </div>
       </div>
       
-      {/* Staff Grid */}
+      {/* Operators Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {staff && staff.length > 0 ? (
           staff.map((staffMember) => (
@@ -392,17 +392,17 @@ const StaffList = () => {
           ))
         ) : (
           <div className="col-span-3 text-center py-12 text-gray-500 dark:text-gray-400">
-            No staff members found. Add your first staff member to get started.
+            No operators found. Add your first operator to get started.
           </div>
         )}
       </div>
       
-      {/* Add/Edit Staff Modal */}
+      {/* Add/Edit Operator Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              {selectedStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+              {selectedStaff ? 'Edit Operator' : 'Add New Operator'}
             </h3>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -487,7 +487,7 @@ const StaffList = () => {
                     onChange={handleInputChange}
                     rows="3"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter a description of this staff member"
+                    placeholder="Enter a description of this operator"
                   ></textarea>
                 </div>
               </div>
@@ -503,7 +503,7 @@ const StaffList = () => {
                   type="submit"
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg"
                 >
-                  {selectedStaff ? 'Update Staff' : 'Add Staff'}
+                  {selectedStaff ? 'Update Operator' : 'Add Operator'}
                 </button>
               </div>
             </form>
@@ -515,10 +515,11 @@ const StaffList = () => {
       {deletePasswordPrompt && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Confirm Deletion</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Confirm Operator Deletion
+            </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You are about to delete <span className="font-medium">{staffToDelete?.name}</span>. 
-              This action requires admin password confirmation.
+              Are you sure you want to delete {staffToDelete?.name}? This action cannot be undone.
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
