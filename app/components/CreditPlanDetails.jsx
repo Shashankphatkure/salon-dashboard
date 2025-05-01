@@ -69,6 +69,7 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
           
         if (error) throw error;
         
+        console.log('Fetched transactions:', data);
         setTransactions(data || []);
         
       } catch (error) {

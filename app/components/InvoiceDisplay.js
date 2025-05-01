@@ -47,7 +47,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           const { data: transactionData, error: transactionError } = await supabase
             .from('transactions')
             .select('*')
-            .eq('appointment_id', appointment.id)
+            .eq('invoice_id', appointment.id)
             .limit(1);
             
           if (transactionError) {
@@ -142,7 +142,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           ? services.map(s => s.service?.name || 'Service').join(', ')
           : 'Salon Service',
         date: new Date(),
-        appointment_id: appointment.id
+        invoice_id: appointment.id
       };
       
       const { error: transactionError } = await supabase

@@ -97,7 +97,7 @@ export default function InvoicePage() {
             const { data: transactionData } = await supabase
               .from('transactions')
               .select('credit_used')
-              .eq('appointment_id', appointment.id)
+              .eq('invoice_id', appointment.id)
               .limit(1);
               
             if (transactionData && transactionData.length > 0) {
