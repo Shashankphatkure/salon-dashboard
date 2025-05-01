@@ -93,37 +93,54 @@ export default function InvoiceDisplay({ appointment, onClose }) {
 
   // Calculate how much credit to apply based on membership
   const calculateCreditToApply = (membership) => {
-    if (!membership) return;
+    if (!membership || !membership.points_balance) {
+      console.log('No membership or zero points balance, skipping credit application');
+      setCreditApplied(0);
+      return;
+    }
+    
+    console.log('Calculating credit to apply from membership:', membership);
     
     let maxCreditPercentage = 0;
     let membershipType = customerInfo.membership_type || '';
     
-    // Determine max credit percentage based on membership type
-    if (membershipType.includes('Gold')) {
-      maxCreditPercentage = 70;
-    } else if (membershipType.includes('Silver Plus')) {
-      maxCreditPercentage = 50;
-    } else if (membershipType.includes('Silver')) {
-      maxCreditPercentage = 30;
+    // Determine max credit percentage based on membership type according to plan structure:
+    // Silver: 30% discount (20% on first service)
+    // Silver Plus: 38% discount (35% on first service)
+    // Gold: 50% discount (50% on first service)
+    // Non-Membership plans have their own specific percentages
+    if (membershipType === 'Gold') {
+      maxCreditPercentage = 50; // Gold: 50% discount per plan
+    } else if (membershipType === 'Silver Plus') {
+      maxCreditPercentage = 38; // Silver Plus: 38% discount per plan
+    } else if (membershipType === 'Silver') {
+      maxCreditPercentage = 30; // Silver: 30% discount per plan
     } else if (membershipType.includes('Non-Membership-10k')) {
-      maxCreditPercentage = 70;
+      maxCreditPercentage = 30; // 10k plan: 30% off
     } else if (membershipType.includes('Non-Membership-20k')) {
-      maxCreditPercentage = 70;
+      maxCreditPercentage = 38; // 20k plan: 38% off
     } else if (membershipType.includes('Non-Membership-30k')) {
-      maxCreditPercentage = 70;
+      maxCreditPercentage = 45; // 30k plan: 45% off
     } else if (membershipType.includes('Non-Membership-50k')) {
-      maxCreditPercentage = 70;
+      maxCreditPercentage = 60; // 50k plan: 60% off
     } else {
-      maxCreditPercentage = 20; // Default for standard plans
+      maxCreditPercentage = 0; // Default for no plan: no discount
     }
+    
+    console.log(`Membership type: ${membershipType}, Max credit percentage: ${maxCreditPercentage}%`);
+    console.log(`Points balance: ${membership.points_balance}, Total amount: ${totalAmount}`);
     
     // Calculate maximum credit that can be applied
     const maxCreditAmount = Math.min(
-      membership.points_balance,
-      totalAmount * (maxCreditPercentage / 100)
+      membership.points_balance, // Can't use more points than available
+      totalAmount * (maxCreditPercentage / 100) // Can't exceed max percentage of bill
     );
     
-    setCreditApplied(maxCreditAmount);
+    console.log(`Calculated max credit to apply: ${maxCreditAmount} (${maxCreditPercentage}% of ${totalAmount}, limited by ${membership.points_balance} available points)`);
+    
+    // Round down to nearest whole number for cleaner display
+    const roundedCredit = Math.floor(maxCreditAmount);
+    setCreditApplied(roundedCredit);
   };
 
   // Record transaction in the database
