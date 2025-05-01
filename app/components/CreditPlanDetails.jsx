@@ -55,10 +55,14 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
   // Fetch transactions for the customer
   useEffect(() => {
     const fetchTransactions = async () => {
-      if (!customerData) return;
+      if (!customerData) {
+        console.log('No customer data available, skipping transaction fetch');
+        return;
+      }
       
       try {
         setIsLoading(true);
+        console.log('Fetching transactions for customer ID:', customerData.id);
         
         // Fetch transactions from Supabase
         const { data, error } = await supabase
@@ -67,13 +71,18 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
           .eq('customer_id', customerData.id)
           .order('date', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error fetching transactions:', error);
+          throw error;
+        }
         
-        console.log('Fetched transactions:', data);
+        console.log(`Fetched ${data?.length || 0} transactions:`, data);
         setTransactions(data || []);
         
       } catch (error) {
-        console.error('Error fetching transactions:', error);
+        console.error('Error fetching transactions:', error.message, error);
+        // Don't let errors prevent component rendering
+        setTransactions([]);
       } finally {
         setIsLoading(false);
       }

@@ -128,7 +128,16 @@ export default function InvoiceDisplay({ appointment, onClose }) {
 
   // Record transaction in the database
   const recordTransaction = async () => {
+    // Log the values to help with debugging
+    console.log('Transaction conditions:', {
+      hasRecordedTransaction,
+      customerId: customerInfo?.id,
+      appointmentId: appointment.id,
+      creditApplied
+    });
+    
     if (hasRecordedTransaction || !customerInfo?.id || !appointment.id || creditApplied <= 0) {
+      console.log('Skipping transaction recording due to conditions not met');
       return;
     }
     
@@ -141,18 +150,24 @@ export default function InvoiceDisplay({ appointment, onClose }) {
         service_name: services.length > 0 
           ? services.map(s => s.service?.name || 'Service').join(', ')
           : 'Salon Service',
-        date: new Date(),
-        invoice_id: appointment.id
+        date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD for SQL DATE
+        invoice_id: appointment.id,
+        appointment_id: appointment.id // Add this field to match the schema
       };
       
-      const { error: transactionError } = await supabase
+      console.log('Inserting transaction data:', transactionData);
+      
+      const { data, error: transactionError } = await supabase
         .from('transactions')
-        .insert([transactionData]);
+        .insert([transactionData])
+        .select(); // Add this to get the inserted record
         
       if (transactionError) {
         console.error('Error recording transaction:', transactionError);
         return;
       }
+      
+      console.log('Transaction recorded successfully:', data);
       
       // Update membership points balance if there's an active membership
       if (customerMembership && customerMembership.id) {
@@ -165,6 +180,8 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           
         if (membershipError) {
           console.error('Error updating membership balance:', membershipError);
+        } else {
+          console.log('Membership balance updated to:', newBalance);
         }
       }
       
