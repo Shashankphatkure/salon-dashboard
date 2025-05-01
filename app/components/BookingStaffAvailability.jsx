@@ -176,6 +176,106 @@ export default function BookingStaffAvailability({
     return blockedSlots[staffId] && blockedSlots[staffId][timeSlot];
   };
 
+  // Time slot in the grid
+  const renderTimeSlot = (staffId, timeSlot, isSelected) => {
+    if (typeof timeSlot === 'string') {
+      // Handle old string format for backward compatibility
+      const time = timeSlot;
+      // ... existing code using time ...
+    } else {
+      // Handle new object format with time and booked properties
+      const { time, booked } = timeSlot;
+      const isBlockedSlot = isTimeSlotBooked(staffId, time);
+      const isAvailableSlot = isTimeSlotAvailable(staffId, time);
+      const isTimeSelectedSlot = selectedStaff && selectedStaff.id === staffId && selectedTime === time;
+      
+      return (
+        <div
+          key={`${staffId}-${time}`}
+          className={`
+            rounded-md px-2 py-1 cursor-pointer text-center text-sm
+            ${time === selectedTime ? 'bg-purple-500 text-white' : 
+              booked ? 'bg-red-500 text-white cursor-not-allowed' : 
+              !isAvailableSlot ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
+              'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50'
+            }
+            ${time === selectedTime ? 'font-bold' : 'font-medium'}
+            transition-colors
+          `}
+          onClick={(e) => {
+            // Stop propagation to prevent staff selection
+            e.stopPropagation();
+            
+            if (booked) {
+              showBlockInfo(e, staffId, time);
+            } else if (!isAvailableSlot) {
+              // Show a tooltip or message about unavailability
+              alert('This time slot is not available for booking as the staff member is not scheduled to work at this time.');
+            } else {
+              console.log('Selecting time slot:', time);
+              
+              // Always set the time first
+              if (selectedTime === time) {
+                // If selecting the same time, clear it
+                setSelectedTime('');
+                setSelectedDuration(1);
+              } else {
+                // Set the new time
+                setSelectedTime(time);
+                
+                // Calculate appropriate duration based on consecutive available slots
+                const availableSlots = getAvailableTimeSlots();
+                const timeIndex = availableSlots.findIndex(slot => 
+                  (typeof slot === 'string' ? slot : slot.time) === time
+                );
+                
+                if (timeIndex !== -1) {
+                  // Set maximum duration based on available consecutive slots
+                  let maxDuration = 1;
+                  let nextSlotIndex = timeIndex + 1;
+                  
+                  while (
+                    nextSlotIndex < availableSlots.length && 
+                    !(typeof availableSlots[nextSlotIndex] === 'string' ? false : availableSlots[nextSlotIndex].booked)
+                  ) {
+                    // Check if slots are consecutive
+                    const currentSlot = availableSlots[nextSlotIndex - 1];
+                    const nextSlot = availableSlots[nextSlotIndex];
+                    
+                    const currentTime = typeof currentSlot === 'string' ? currentSlot : currentSlot.time;
+                    const nextTime = typeof nextSlot === 'string' ? nextSlot : nextSlot.time;
+                    
+                    const [currentHour, currentMinute] = currentTime.split(':').map(num => parseInt(num, 10));
+                    const [nextHour, nextMinute] = nextTime.split(':').map(num => parseInt(num, 10));
+                    
+                    const currentTotalMinutes = currentHour * 60 + (currentMinute || 0);
+                    const nextTotalMinutes = nextHour * 60 + (nextMinute || 0);
+                    
+                    if (nextTotalMinutes - currentTotalMinutes !== 30) {
+                      break;
+                    }
+                    
+                    maxDuration++;
+                    nextSlotIndex++;
+                  }
+                  
+                  console.log(`Max duration for ${time}: ${maxDuration} slots`);
+                  // Ensure duration doesn't exceed what's available
+                  setSelectedDuration(Math.min(selectedDuration, maxDuration));
+                } else {
+                  // Fallback if the slot isn't in availableSlots (shouldn't happen)
+                  setSelectedDuration(1);
+                }
+              }
+            }
+          }}
+        >
+          <span className="block text-sm font-medium">{formatTime(time)}</span>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="mt-4">
       {staff && staff.length > 0 ? (
@@ -297,7 +397,7 @@ export default function BookingStaffAvailability({
                             <span className="text-gray-600 dark:text-gray-400">Available</span>
                           </div>
                           <div className="flex items-center">
-                            <div className="w-3 h-3 bg-red-500 dark:bg-red-600 rounded mr-1"></div>
+                            <div className="w-3 h-3 bg-red-100 dark:bg-red-900/30 rounded mr-1"></div>
                             <span className="text-gray-600 dark:text-gray-400">Booked</span>
                           </div>
                           <div className="flex items-center">
@@ -310,7 +410,11 @@ export default function BookingStaffAvailability({
                       <div className="flex flex-wrap gap-2">
                         {isSelected && (
                           <>
-                            {getAvailableTimeSlots().map((time, index) => {
+                            {getAvailableTimeSlots().map((timeSlot, index) => {
+                              // Extract time from the timeSlot object
+                              const time = typeof timeSlot === 'string' ? timeSlot : timeSlot.time;
+                              const isBooked = typeof timeSlot === 'string' ? false : timeSlot.booked;
+                              
                               // Determine if this slot would be included in selected time range
                               const isInSelectedRange = selectedTime && selectedDuration > 1 ? (() => {
                                 // Convert selected time to minutes
@@ -338,8 +442,8 @@ export default function BookingStaffAvailability({
                                     rounded-md px-2 py-1 cursor-pointer text-center text-sm
                                     ${time === selectedTime ? 'bg-purple-500 text-white' : 
                                       isInSelectedRange ? 'bg-purple-200 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
-                                      isBlocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 
-                                      !isAvailable ? 'bg-red-100 text-red-600 cursor-not-allowed' :
+                                      isBooked ? 'bg-red-100 text-red-600 cursor-not-allowed' : 
+                                      !isAvailable ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
                                       'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50'
                                     }
                                     ${time === selectedTime ? 'font-bold' : 'font-medium'}
@@ -349,11 +453,12 @@ export default function BookingStaffAvailability({
                                     // Stop propagation to prevent staff selection
                                     e.stopPropagation();
                                     
-                                    if (isBlocked) {
-                                      showBlockInfo(e, person.id, time);
+                                    if (isBooked) {
+                                      // Show information about the booking
+                                      alert('This time slot is already booked but is shown for your reference. Please select an available green slot instead.');
                                     } else if (!isAvailable) {
-                                      // Show a tooltip or message about the slot being booked
-                                      alert('This time slot is already booked.');
+                                      // Show a tooltip or message about unavailability
+                                      alert('This time slot is not available for booking.');
                                     } else {
                                       console.log('Selecting time slot:', time);
                                       
@@ -363,22 +468,41 @@ export default function BookingStaffAvailability({
                                         setSelectedTime('');
                                         setSelectedDuration(1);
                                       } else {
-                                        // Set the new time immediately
+                                        // Set the new time
                                         setSelectedTime(time);
                                         
-                                        // Then calculate appropriate duration
+                                        // Calculate appropriate duration based on consecutive available slots
                                         const availableSlots = getAvailableTimeSlots();
-                                        if (availableSlots.includes(time)) {
-                                          const timeIndex = availableSlots.indexOf(time);
-                                          
+                                        const timeIndex = availableSlots.findIndex(slot => 
+                                          (typeof slot === 'string' ? slot : slot.time) === time
+                                        );
+                                        
+                                        if (timeIndex !== -1) {
                                           // Set maximum duration based on available consecutive slots
                                           let maxDuration = 1;
                                           let nextSlotIndex = timeIndex + 1;
                                           
                                           while (
                                             nextSlotIndex < availableSlots.length && 
-                                            areConsecutiveSlots(availableSlots[nextSlotIndex - 1], availableSlots[nextSlotIndex])
+                                            !(typeof availableSlots[nextSlotIndex] === 'string' ? false : availableSlots[nextSlotIndex].booked)
                                           ) {
+                                            // Check if slots are consecutive
+                                            const currentSlot = availableSlots[nextSlotIndex - 1];
+                                            const nextSlot = availableSlots[nextSlotIndex];
+                                            
+                                            const currentTime = typeof currentSlot === 'string' ? currentSlot : currentSlot.time;
+                                            const nextTime = typeof nextSlot === 'string' ? nextSlot : nextSlot.time;
+                                            
+                                            const [currentHour, currentMinute] = currentTime.split(':').map(num => parseInt(num, 10));
+                                            const [nextHour, nextMinute] = nextTime.split(':').map(num => parseInt(num, 10));
+                                            
+                                            const currentTotalMinutes = currentHour * 60 + (currentMinute || 0);
+                                            const nextTotalMinutes = nextHour * 60 + (nextMinute || 0);
+                                            
+                                            if (nextTotalMinutes - currentTotalMinutes !== 30) {
+                                              break;
+                                            }
+                                            
                                             maxDuration++;
                                             nextSlotIndex++;
                                           }
@@ -395,6 +519,11 @@ export default function BookingStaffAvailability({
                                   }}
                                 >
                                   <span className="block text-sm font-medium">{formatTime(time)}</span>
+                                  {isBooked && (
+                                    <span className="text-xs bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-200 px-1 py-0.5 rounded">
+                                      Booked
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })}

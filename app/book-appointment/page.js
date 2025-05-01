@@ -225,6 +225,17 @@ export default function BookAppointment() {
       return;
     }
     
+    // Check if a booked time slot was selected
+    const availableSlots = getAvailableTimeSlots();
+    const selectedTimeSlot = availableSlots.find(slot => 
+      (typeof slot === 'string' ? slot : slot.time) === selectedTime
+    );
+    
+    if (selectedTimeSlot && typeof selectedTimeSlot !== 'string' && selectedTimeSlot.booked) {
+      setError('You cannot book an already booked time slot. Please select another time.');
+      return;
+    }
+    
     // Validate appointment times
     const now = new Date();
     const today = new Date().toISOString().split('T')[0];
@@ -464,7 +475,7 @@ export default function BookAppointment() {
     const currentHour = isToday ? new Date().getHours() : 0;
     const currentMinute = isToday ? new Date().getMinutes() : 0;
     
-    // Filter out time slots that are already booked for this staff
+    // Filter for booked slots for this staff
     const bookedSlotsForStaff = bookedAppointments.filter(appointment => 
       appointment.staff_id === selectedStaff.id
     );
@@ -490,9 +501,11 @@ export default function BookAppointment() {
           // Check if this time slot overlaps with any booked appointments for this staff
           const isBooked = isTimeSlotBooked(timeString, bookedSlotsForStaff);
           
-          if (!isBooked) {
-            defaultTimeSlots.push(timeString);
-          }
+          // Add the slot with a "booked" flag if it's booked
+          defaultTimeSlots.push({
+            time: timeString,
+            booked: isBooked
+          });
         }
       }
       
@@ -532,17 +545,20 @@ export default function BookAppointment() {
         // Check if this time slot overlaps with any booked appointments for this staff
         const isBooked = isTimeSlotBooked(timeString, bookedSlotsForStaff);
         
-        // Add to available slots only if staff is available and the slot is not booked
-        if (isAvailable && !isBooked) {
-          timeSlots.push(timeString);
+        // Add the slot with availability and booking information
+        if (isAvailable) {
+          timeSlots.push({
+            time: timeString,
+            booked: isBooked
+          });
         }
       }
     }
     
     // Sort the time slots chronologically
     timeSlots.sort((a, b) => {
-      const [aHour, aMinute] = a.split(':').map(num => parseInt(num, 10));
-      const [bHour, bMinute] = b.split(':').map(num => parseInt(num, 10));
+      const [aHour, aMinute] = a.time.split(':').map(num => parseInt(num, 10));
+      const [bHour, bMinute] = b.time.split(':').map(num => parseInt(num, 10));
       
       const aTotalMinutes = aHour * 60 + aMinute;
       const bTotalMinutes = bHour * 60 + bMinute;
@@ -550,8 +566,69 @@ export default function BookAppointment() {
       return aTotalMinutes - bTotalMinutes;
     });
     
-    console.log('Available time slots:', timeSlots);
+    console.log('Time slots with availability:', timeSlots);
     return timeSlots;
+  };
+
+  // Handle time selection
+  const handleTimeSelection = (time) => {
+    const slot = getAvailableTimeSlots().find(slot => slot.time === time);
+    if (!slot || slot.booked) {
+      setError('This time slot is already booked');
+      return;
+    }
+    
+    setSelectedTime(time);
+    setError(null);
+  };
+
+  // Check if a time slot can accommodate the selected duration
+  const canFitDuration = (startTime, availableSlots, durationSlots) => {
+    if (!startTime || durationSlots <= 0 || !availableSlots || availableSlots.length === 0) return false;
+    
+    // Find index of starting slot
+    const startIndex = availableSlots.findIndex(slot => slot.time === startTime);
+    if (startIndex === -1) return false;
+    
+    // Check if we have enough consecutive slots
+    if (startIndex + durationSlots > availableSlots.length) return false;
+    
+    // Convert starting time to minutes
+    const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
+    const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+    
+    // Calculate end time in minutes
+    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
+    
+    // Check for conflicts with booked appointments
+    // First check if any of the required slots are already booked
+    for (let i = 0; i < durationSlots; i++) {
+      if (startIndex + i >= availableSlots.length) return false;
+      
+      const slot = availableSlots[startIndex + i];
+      if (slot.booked) return false;
+    }
+    
+    // Check that each following slot is 30 minutes apart from the previous one
+    for (let i = 1; i < durationSlots; i++) {
+      const currentSlot = availableSlots[startIndex + i];
+      const previousSlot = availableSlots[startIndex + i - 1];
+      
+      if (!currentSlot) return false;
+      
+      const [currentHour, currentMinute] = currentSlot.time.split(':').map(num => parseInt(num, 10));
+      const [prevHour, prevMinute] = previousSlot.time.split(':').map(num => parseInt(num, 10));
+      
+      const currentTotalMinutes = (currentHour * 60) + (currentMinute || 0);
+      const prevTotalMinutes = (prevHour * 60) + (prevMinute || 0);
+      
+      // Check if this slot is exactly 30 minutes after the previous one
+      if (currentTotalMinutes !== prevTotalMinutes + 30) {
+        return false;
+      }
+    }
+    
+    return true;
   };
 
   // Helper function to check if a time slot is already booked
@@ -785,62 +862,6 @@ export default function BookAppointment() {
     
     return `${endHour}:${endMinute === 0 ? '00' : endMinute}`;
   };
-  
-  // Check if a time slot can accommodate the selected duration
-  const canFitDuration = (startTime, availableSlots, durationSlots) => {
-    if (!startTime || durationSlots <= 0 || !availableSlots || availableSlots.length === 0) return false;
-    
-    // Find index of starting slot
-    const startIndex = availableSlots.indexOf(startTime);
-    if (startIndex === -1) return false;
-    
-    // Check if we have enough consecutive slots
-    if (startIndex + durationSlots > availableSlots.length) return false;
-    
-    // Convert starting time to minutes
-    const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
-    const startTotalMinutes = (startHour * 60) + (startMinute || 0);
-    
-    // Calculate end time in minutes
-    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
-    
-    // Check for conflicts with booked appointments
-    const bookedSlotsForStaff = bookedAppointments.filter(appointment => 
-      appointment.staff_id === selectedStaff.id
-    );
-    
-    // Check if any booked appointment overlaps with our proposed time slot
-    const hasConflict = bookedSlotsForStaff.some(appointment => {
-      const [apptStartHour, apptStartMinute] = appointment.start_time.split(':').map(num => parseInt(num, 10));
-      const [apptEndHour, apptEndMinute] = appointment.end_time.split(':').map(num => parseInt(num, 10));
-      
-      const apptStartTotalMinutes = (apptStartHour * 60) + (apptStartMinute || 0);
-      const apptEndTotalMinutes = (apptEndHour * 60) + (apptEndMinute || 0);
-      
-      // Check if the time slots overlap
-      return (startTotalMinutes >= apptStartTotalMinutes && startTotalMinutes < apptEndTotalMinutes) || 
-            (endTotalMinutes > apptStartTotalMinutes && endTotalMinutes <= apptEndTotalMinutes) ||
-            (startTotalMinutes <= apptStartTotalMinutes && endTotalMinutes >= apptEndTotalMinutes);
-    });
-    
-    if (hasConflict) return false;
-    
-    // Check that each following slot is 30 minutes apart from the previous one
-    for (let i = 1; i < durationSlots; i++) {
-      const nextSlot = availableSlots[startIndex + i];
-      if (!nextSlot) return false;
-      
-      const [nextHour, nextMinute] = nextSlot.split(':').map(num => parseInt(num, 10));
-      const nextTotalMinutes = (nextHour * 60) + (nextMinute || 0);
-      
-      // Check if this slot is exactly 30 minutes after the previous slot
-      if (nextTotalMinutes !== startTotalMinutes + (i * 30)) {
-        return false;
-      }
-    }
-    
-    return true;
-  };
 
   // Format duration for display
   const formatDuration = (slots) => {
@@ -857,6 +878,17 @@ export default function BookAppointment() {
     }
     
     return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} minutes`;
+  };
+
+  // Check if two slots are consecutive
+  const areConsecutiveSlots = (slot1, slot2) => {
+    const [hour1, minute1] = slot1.time.split(':').map(num => parseInt(num, 10));
+    const [hour2, minute2] = slot2.time.split(':').map(num => parseInt(num, 10));
+    
+    const totalMinutes1 = hour1 * 60 + (minute1 || 0);
+    const totalMinutes2 = hour2 * 60 + (minute2 || 0);
+    
+    return totalMinutes2 - totalMinutes1 === 30;
   };
 
   return (
@@ -1177,8 +1209,22 @@ export default function BookAppointment() {
               
               <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                 <p>
-                  <span className="font-medium">Note:</span> Red slots indicate times that are already booked and unavailable for selection. Gray slots indicate times when staff are not scheduled to work.
+                  <span className="font-medium">Note:</span> Time slots are color-coded to show availability:
                 </p>
+                <ul className="mt-2 space-y-1 pl-4">
+                  <li className="flex items-center">
+                    <span className="w-3 h-3 inline-block bg-green-100 mr-2 rounded"></span> 
+                    <span>Green slots are available for booking</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-3 h-3 inline-block bg-red-100 mr-2 rounded"></span> 
+                    <span>Red slots are already booked and cannot be selected</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-3 h-3 inline-block bg-gray-300 mr-2 rounded"></span> 
+                    <span>Gray slots indicate times when staff are not scheduled to work</span>
+                  </li>
+                </ul>
               </div>
               
               <BookingStaffAvailability
