@@ -141,7 +141,7 @@ function MembershipContent() {
                 <option value="">Select a customer</option>
                 {filteredCustomers.map(customer => (
                   <option key={customer.id} value={customer.id}>
-                    {customer.name} {customer.membershipType !== 'None' ? `(Current: ${customer.membershipType})` : '(No membership)'}
+                    {customer.name} {customer.membershipType !== 'None' ? `(Current: ${customer.membershipType})` : '( Walkin Customer)'}
                   </option>
                 ))}
               </select>
