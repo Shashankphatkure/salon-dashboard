@@ -147,6 +147,7 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
         totalAmount: planDetails.initialCredit,
         paidAmount: 0,
         bonusAmount: planDetails.initialCredit,
+        thisMonthBonus: planDetails.monthlyBonus,
         remainingCredit: planDetails.initialCredit,
         usedCredit: 0,
         validUntil: new Date(Date.now() + planDetails.validityMonths * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -189,11 +190,26 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
     // Remaining credit
     const remainingCredit = Math.max(0, totalCreditEarned - usedCredit);
     
+    // Determine if we're eligible for this month's bonus
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const membershipMonth = startDate.getMonth();
+    const membershipYear = startDate.getFullYear();
+    
+    // Check if we're within the validity period and eligible for this month's bonus
+    const isWithinValidity = monthsSinceMembership < planDetails.validityMonths;
+    const hasReceivedThisMonthBonus = 
+      currentMonth === membershipMonth && currentYear === membershipYear && monthsSinceMembership === 0;
+      
+    // Calculate this month's bonus
+    const thisMonthBonus = isWithinValidity && !hasReceivedThisMonthBonus ? planDetails.monthlyBonus : 0;
+    
     return {
       ...planDetails,
       totalAmount: totalCreditEarned,
       paidAmount: planType === 'nonMembership' ? planDetails.planAmount || 0 : 0,
       bonusAmount: planDetails.initialCredit,
+      thisMonthBonus: thisMonthBonus,
       remainingCredit: remainingCredit,
       usedCredit: usedCredit,
       validUntil: validUntil.toISOString().split('T')[0],
@@ -237,6 +253,12 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
               <p className="text-sm text-gray-500 dark:text-gray-400">Credit Balance</p>
               <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                 ₹{planData.remainingCredit.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center min-w-[120px]">
+              <p className="text-sm text-gray-500 dark:text-gray-400">This Month's Bonus</p>
+              <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                ₹{planData.thisMonthBonus.toLocaleString()}
               </p>
             </div>
             <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center min-w-[120px]">
