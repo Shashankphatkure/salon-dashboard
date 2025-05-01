@@ -296,6 +296,8 @@ export default function SalesPage() {
             <div>
               <div class="invoice-title">SALE INVOICE</div>
               <div>Date: ${formattedDate}</div>
+              <div>Time: ${new Date().toLocaleTimeString()}</div>
+              <div>Created: ${formattedDate}</div>
               <div>Invoice #: INV-S-${Math.floor(Math.random() * 10000)}</div>
             </div>
           </div>

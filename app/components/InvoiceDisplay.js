@@ -108,6 +108,8 @@ export default function InvoiceDisplay({ appointment, onClose }) {
               <div className="text-right">
                 <h2 className="text-2xl font-bold text-gray-800 mb-1">INVOICE</h2>
                 <p className="text-gray-600">Date: {formatDate(appointment.date)}</p>
+                <p className="text-gray-600">Time: {new Date().toLocaleTimeString()}</p>
+                <p className="text-gray-600">Created: {formatDate(new Date())} </p>
                 <p className="text-gray-600">Invoice #: {invoiceId}</p>
                 <p className="text-gray-600">Status: {appointment.status === 'completed' ? 'Paid' : 'Pending'}</p>
               </div>
