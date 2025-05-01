@@ -170,30 +170,220 @@ export default function PlanUpgrade({ customerId }) {
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
             Note: Once upgraded, only remaining points will be carried forward. Upgrades are non-reversible.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {currentPlanType === 'Silver' && (
-              <button
-                onClick={() => handleUpgrade('Silver Plus')}
-                disabled={upgrading}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {upgrading ? 'Upgrading...' : 'Upgrade to Silver Plus'}
-              </button>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Silver Plan Card */}
+            <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all ${currentPlanType === 'Silver' ? 'ring-2 ring-purple-500' : 'opacity-60'}`}>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Silver</h3>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-bold text-purple-600 dark:text-purple-400">₹2,000</span>
+                  <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">/year</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  Basic benefits for casual salon-goers
+                </p>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      20% off on first service
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      250 points monthly bonus (₹3,000/year)
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      Up to 3 members allowed
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 pb-6">
+                {currentPlanType === 'Silver' ? (
+                  <div className="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium">
+                    Current Plan
+                  </div>
+                ) : (
+                  <button 
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                    disabled
+                  >
+                    Not Available
+                  </button>
+                )}
+              </div>
+            </div>
             
-            {(currentPlanType === 'Silver' || currentPlanType === 'Silver Plus') && (
-              <button
-                onClick={() => handleUpgrade('Gold')}
-                disabled={upgrading}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {upgrading ? 'Upgrading...' : 'Upgrade to Gold'}
-              </button>
-            )}
+            {/* Silver Plus Plan Card */}
+            <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all ${currentPlanType === 'Silver Plus' ? 'ring-2 ring-purple-500' : ''}`}>
+              <div className="absolute top-0 right-0">
+                <div className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  Popular
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Silver Plus</h3>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-bold text-purple-600 dark:text-purple-400">₹4,000</span>
+                  <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">/year</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  Enhanced benefits for regular customers
+                </p>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      35% off on first service
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      500 points monthly bonus (₹6,000/year)
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      7,500 points added to account on signup
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      Up to 5 members allowed
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 pb-6">
+                {currentPlanType === 'Silver Plus' ? (
+                  <div className="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium">
+                    Current Plan
+                  </div>
+                ) : currentPlanType === 'Silver' ? (
+                  <button 
+                    onClick={() => handleUpgrade('Silver Plus')}
+                    disabled={upgrading}
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upgrading ? 'Upgrading...' : 'Upgrade to Silver Plus'}
+                  </button>
+                ) : (
+                  <button 
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                    disabled
+                  >
+                    Not Available
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Gold Plan Card */}
+            <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all ${currentPlanType === 'Gold' ? 'ring-2 ring-yellow-500' : ''}`}>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Gold</h3>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">₹8,000</span>
+                  <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">/year</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  Premium benefits for loyal customers
+                </p>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      50% off on first service
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      ₹12,500 credit on signup
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      1,000 points monthly bonus (₹12,000/year)
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      Unlimited members allowed
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      500 bonus points for each referral
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 pb-6">
+                {currentPlanType === 'Gold' ? (
+                  <div className="inline-block bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full px-3 py-1 text-xs font-medium">
+                    Current Plan
+                  </div>
+                ) : ['Silver', 'Silver Plus'].includes(currentPlanType) ? (
+                  <button 
+                    onClick={() => handleUpgrade('Gold')}
+                    disabled={upgrading}
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upgrading ? 'Upgrading...' : 'Upgrade to Gold'}
+                  </button>
+                ) : (
+                  <button 
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                    disabled
+                  >
+                    Not Available
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
