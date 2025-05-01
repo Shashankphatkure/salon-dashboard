@@ -368,6 +368,7 @@ function MembershipContent() {
             
           </div>
 
+
           {/* How It Works Section */}
           <div className="mt-16 max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
             <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">How Membership Works</h3>

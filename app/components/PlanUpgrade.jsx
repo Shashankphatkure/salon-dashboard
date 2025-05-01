@@ -66,14 +66,17 @@ export default function PlanUpgrade({ customerId }) {
       const activeMembership = customer.memberships?.find(m => m.active);
       const currentPlanType = activeMembership?.membership_type || customer.membership_type;
       
-      // Validate upgrade path
-      if (newPlanType === 'Silver Plus' && currentPlanType !== 'Silver') {
+      // If customer has no membership, allow direct upgrade to any plan
+      if (!currentPlanType || currentPlanType === 'None') {
+        // Proceed with upgrade to any plan
+      } 
+      // For existing members, validate upgrade path
+      else if (newPlanType === 'Silver Plus' && currentPlanType !== 'Silver') {
         setError('You can only upgrade to Silver Plus from Silver plan.');
         setUpgrading(false);
         return;
       }
-      
-      if (newPlanType === 'Gold' && !['Silver', 'Silver Plus'].includes(currentPlanType)) {
+      else if (newPlanType === 'Gold' && !['Silver', 'Silver Plus'].includes(currentPlanType)) {
         setError('You can only upgrade to Gold from Silver or Silver Plus plan.');
         setUpgrading(false);
         return;
@@ -85,12 +88,14 @@ export default function PlanUpgrade({ customerId }) {
         return;
       }
       
-      // Make sure we're not downgrading
-      const planHierarchy = { 'Silver': 1, 'Silver Plus': 2, 'Gold': 3 };
-      if (planHierarchy[newPlanType] < planHierarchy[currentPlanType]) {
-        setError('Plan downgrades are not allowed. You can only upgrade to higher plans.');
-        setUpgrading(false);
-        return;
+      // Make sure we're not downgrading for existing memberships
+      if (currentPlanType && currentPlanType !== 'None') {
+        const planHierarchy = { 'Silver': 1, 'Silver Plus': 2, 'Gold': 3 };
+        if (planHierarchy[newPlanType] < planHierarchy[currentPlanType]) {
+          setError('Plan downgrades are not allowed. You can only upgrade to higher plans.');
+          setUpgrading(false);
+          return;
+        }
       }
       
       // Call the migratePlan function from lib/db.js
@@ -133,7 +138,8 @@ export default function PlanUpgrade({ customerId }) {
   const currentPoints = activeMembership?.points_balance || 0;
   
   // Check if non-membership to prevent upgrades
-  const isNonMembership = currentPlanType?.includes('Non-Membership') || currentPlanType === 'None';
+  const isNonMembership = currentPlanType?.includes('Non-Membership');
+  const hasNoMembership = !currentPlanType || currentPlanType === 'None';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
@@ -219,6 +225,14 @@ export default function PlanUpgrade({ customerId }) {
                   <div className="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full px-3 py-1 text-xs font-medium">
                     Current Plan
                   </div>
+                ) : hasNoMembership ? (
+                  <button 
+                    onClick={() => handleUpgrade('Silver')}
+                    disabled={upgrading}
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upgrading ? 'Upgrading...' : 'Select Silver Plan'}
+                  </button>
                 ) : (
                   <button 
                     className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
@@ -294,6 +308,14 @@ export default function PlanUpgrade({ customerId }) {
                     className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {upgrading ? 'Upgrading...' : 'Upgrade to Silver Plus'}
+                  </button>
+                ) : hasNoMembership ? (
+                  <button 
+                    onClick={() => handleUpgrade('Silver Plus')}
+                    disabled={upgrading}
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upgrading ? 'Upgrading...' : 'Select Silver Plus Plan'}
                   </button>
                 ) : (
                   <button 
@@ -373,6 +395,14 @@ export default function PlanUpgrade({ customerId }) {
                     className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {upgrading ? 'Upgrading...' : 'Upgrade to Gold'}
+                  </button>
+                ) : hasNoMembership ? (
+                  <button 
+                    onClick={() => handleUpgrade('Gold')}
+                    disabled={upgrading}
+                    className="w-full mt-4 py-2 px-3 rounded-md text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upgrading ? 'Upgrading...' : 'Select Gold Plan'}
                   </button>
                 ) : (
                   <button 
