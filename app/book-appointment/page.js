@@ -117,7 +117,7 @@ export default function BookAppointment() {
     customer.phone.toLowerCase().includes(customerSearchQuery.toLowerCase())
   );
 
-  // Handle radio button change for customer type
+  // Handle customer type change for customer type
   const handleCustomerTypeChange = (e) => {
     const isExisting = e.target.value === 'existing';
     setIsExistingCustomer(isExisting);
@@ -127,6 +127,28 @@ export default function BookAppointment() {
       setCustomerName('');
       setCustomerPhone('');
     }
+  };
+
+  // Handle date change with validation
+  const handleDateChange = (e) => {
+    const selectedDateValue = e.target.value;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const selectedDateObj = new Date(selectedDateValue);
+    selectedDateObj.setHours(0, 0, 0, 0);
+    
+    if (selectedDateObj < today) {
+      // If selected date is in the past, set to today instead
+      setSelectedDate(today.toISOString().split('T')[0]);
+      setError('Cannot book appointments for past dates');
+    } else {
+      setSelectedDate(selectedDateValue);
+      setError(null);
+    }
+    
+    // Reset time selection when date changes
+    setSelectedTime('');
   };
 
   // Handle service selection
@@ -194,6 +216,34 @@ export default function BookAppointment() {
     if (pendingAppointments.length === 0 && (!selectedStaff || !selectedTime)) {
       setError('Please select a staff member and appointment time');
       return;
+    }
+    
+    // Validate appointment times
+    const now = new Date();
+    const today = new Date().toISOString().split('T')[0];
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Check if current selection is valid
+    if (selectedServices.length > 0 && selectedStaff && selectedTime) {
+      const [hour, minute] = selectedTime.split(':').map(num => parseInt(num, 10));
+      
+      if (selectedDate === today && 
+          (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
+        setError('Cannot book appointments for past times');
+        return;
+      }
+    }
+    
+    // Check if any pending appointments are for past times
+    for (const appointment of pendingAppointments) {
+      const [hour, minute] = appointment.time.split(':').map(num => parseInt(num, 10));
+      
+      if (appointment.date === today && 
+          (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
+        setError('One or more appointments are scheduled for past times. Please remove them and try again.');
+        return;
+      }
     }
     
     try {
@@ -389,6 +439,24 @@ export default function BookAppointment() {
     
     console.log('Staff slots found:', staffSlots.length);
     
+    // Check if the selected date is today or in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDateObj = new Date(selectedDate);
+    selectedDateObj.setHours(0, 0, 0, 0);
+    
+    const isToday = selectedDateObj.getTime() === today.getTime();
+    const isPastDay = selectedDateObj < today;
+    
+    // Don't allow booking for past days
+    if (isPastDay) {
+      return [];
+    }
+    
+    // Get current time if it's today
+    const currentHour = isToday ? new Date().getHours() : 0;
+    const currentMinute = isToday ? new Date().getMinutes() : 0;
+    
     // If no staff slots found, provide default time slots (9am-8pm)
     if (staffSlots.length === 0) {
       console.log('No staff availability records found, using default schedule');
@@ -399,6 +467,11 @@ export default function BookAppointment() {
         for (let minute = 0; minute < 60; minute += 30) {
           // Skip 8:30 PM slot
           if (hour === 20 && minute === 30) continue;
+          
+          // Skip past time slots if it's today
+          if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
+            continue;
+          }
           
           defaultTimeSlots.push(`${hour}:${minute === 0 ? '00' : minute}`);
         }
@@ -414,6 +487,11 @@ export default function BookAppointment() {
       for (let minute = 0; minute < 60; minute += 30) {
         // Skip 8:30 PM slot
         if (hour === 20 && minute === 30) continue;
+        
+        // Skip past time slots if it's today
+        if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
+          continue;
+        }
         
         const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
         
@@ -885,7 +963,7 @@ export default function BookAppointment() {
                         type="date" 
                         value={selectedDate}
                         min={new Date().toISOString().split('T')[0]}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                        onChange={handleDateChange}
                         className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         required
                       />
