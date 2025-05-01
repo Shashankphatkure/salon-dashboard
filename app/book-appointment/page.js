@@ -1207,25 +1207,7 @@ export default function BookAppointment() {
                 Staff Availability for {new Date(selectedDate).toLocaleDateString()}
               </h2>
               
-              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p>
-                  <span className="font-medium">Note:</span> Time slots are color-coded to show availability:
-                </p>
-                <ul className="mt-2 space-y-1 pl-4">
-                  <li className="flex items-center">
-                    <span className="w-3 h-3 inline-block bg-green-100 mr-2 rounded"></span> 
-                    <span>Green slots are available for booking</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="w-3 h-3 inline-block bg-red-100 mr-2 rounded"></span> 
-                    <span>Red slots are already booked and cannot be selected</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="w-3 h-3 inline-block bg-gray-300 mr-2 rounded"></span> 
-                    <span>Gray slots indicate times when staff are not scheduled to work</span>
-                  </li>
-                </ul>
-              </div>
+              
               
               <BookingStaffAvailability
                 staff={staff}
