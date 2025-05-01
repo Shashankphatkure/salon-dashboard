@@ -88,7 +88,7 @@ function MembershipContent() {
       } else if (planType === 'Non-Membership-50k') {
         initialPoints = 75000;
       } else if (planType === 'Silver') {
-        initialPoints = 0; // Starting points for Silver
+        initialPoints = 4500; // Starting points for Silver
       } else if (planType === 'Silver Plus') {
         initialPoints = 7500; // Starting points for Silver Plus
       } else if (planType === 'Gold') {
