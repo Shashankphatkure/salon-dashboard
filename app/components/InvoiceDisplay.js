@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import { useState, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
 export default function InvoiceDisplay({ appointment, onClose }) {
@@ -15,10 +14,16 @@ export default function InvoiceDisplay({ appointment, onClose }) {
 
   // Calculate total service amount
   const calculateTotalAmount = () => {
-    if (!appointment || !appointment.services) return 0;
+    if (!appointment || !appointment.services || appointment.services.length === 0) {
+      return parseFloat(appointment.total_price || 0);
+    }
     
     return appointment.services.reduce((total, serviceItem) => {
-      return total + (serviceItem.service?.price || 0);
+      // Check all possible locations for the price
+      const price = serviceItem.price || 
+                   (serviceItem.service && serviceItem.service.price) || 
+                   0;
+      return total + parseFloat(price);
     }, 0);
   };
   
@@ -40,21 +45,14 @@ export default function InvoiceDisplay({ appointment, onClose }) {
     return `${displayHour}:${minutes || '00'} ${suffix}`;
   };
 
-  // Handle print function without using the library
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      const content = document.getElementById('invoice-content');
-      const originalContents = document.body.innerHTML;
-      
-      document.body.innerHTML = content.innerHTML;
-      
-      window.print();
-      
-      document.body.innerHTML = originalContents;
-      // Force a reload to restore React's state
-      window.location.reload();
-    }
-  };
+  // Handle print function using react-to-print
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    onBeforeprint: () => setIsPrinting(true),
+    onAfterPrint: () => setIsPrinting(false),
+    documentTitle: `Invoice-${invoiceId}`,
+    removeAfterPrint: true
+  });
 
   // Handle back/close button
   const handleClose = () => {
@@ -75,8 +73,9 @@ export default function InvoiceDisplay({ appointment, onClose }) {
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+              disabled={isPrinting}
             >
-              Print
+              {isPrinting ? 'Printing...' : 'Print'}
             </button>
             <button
               onClick={handleClose}
@@ -87,7 +86,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           </div>
         </div>
         
-        <div id="invoice-content" ref={printRef} className="p-6 bg-white">
+        <div ref={printRef} className="p-6 bg-white">
           <div className="invoice-container">
             <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
               <div className="flex items-start">
@@ -133,10 +132,30 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {services.map((serviceItem, index) => (
-                    <tr key={index}>
+                  {services && services.length > 0 ? (
+                    services.map((serviceItem, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {serviceItem.service?.name || 'Service'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {appointment.staff?.name || 'Staff'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(appointment.date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          ₹{parseFloat(serviceItem.price || (serviceItem.service && serviceItem.service.price) || 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {serviceItem.service?.name || 'Service'}
+                        Salon Services
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {appointment.staff?.name || 'Staff'}
@@ -148,10 +167,10 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                         {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                        ₹{serviceItem.service?.price || 0}
+                        ₹{parseFloat(appointment.total_price || 0).toLocaleString()}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
                 <tfoot>
                   <tr>
@@ -159,7 +178,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                       Subtotal
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                      ₹{totalAmount}
+                      ₹{totalAmount.toLocaleString()}
                     </td>
                   </tr>
                   <tr>
@@ -175,7 +194,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                       TOTAL
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                      ₹{totalAmount}
+                      ₹{totalAmount.toLocaleString()}
                     </td>
                   </tr>
                 </tfoot>
@@ -186,6 +205,9 @@ export default function InvoiceDisplay({ appointment, onClose }) {
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Payment Information</h3>
               <p className="text-gray-600">Payment Method: Cash</p>
               <p className="text-gray-600">Payment Date: {formatDate(appointment.completed_at || appointment.date)}</p>
+              {customerInfo?.membership_type && (
+                <p className="text-gray-600">Membership Plan: {customerInfo.membership_type}</p>
+              )}
             </div>
             
             <div className="text-center text-gray-500 text-sm mt-8 pt-4 border-t border-gray-200">

@@ -18,6 +18,12 @@ function InvoiceContent() {
   const [error, setError] = useState(null);
   
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+      router.push('/auth/login?redirect=/invoice/create');
+      return;
+    }
+    
     // Fetch appointment data when component mounts
     async function fetchAppointmentData() {
       if (!appointmentId) {
@@ -48,10 +54,10 @@ function InvoiceContent() {
     if (user) {
       fetchAppointmentData();
     }
-  }, [appointmentId, user]);
+  }, [appointmentId, user, authLoading, router]);
 
   const handleGoBack = () => {
-    router.back();
+    router.push('/invoice');
   };
   
   if (authLoading || loading) {
@@ -70,10 +76,10 @@ function InvoiceContent() {
           <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h2>
           <p className="text-gray-700 dark:text-gray-300">{error}</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/invoice')}
             className="mt-6 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
           >
-            Go Back
+            Go to Invoices
           </button>
         </div>
       </div>
