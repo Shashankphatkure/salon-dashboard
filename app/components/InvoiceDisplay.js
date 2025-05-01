@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
 export default function InvoiceDisplay({ appointment, onClose }) {
@@ -45,12 +45,32 @@ export default function InvoiceDisplay({ appointment, onClose }) {
     return `${displayHour}:${minutes || '00'} ${suffix}`;
   };
 
+  // Handle print manually in case react-to-print fails
+  const handleManualPrint = () => {
+    window.print();
+  };
+
+  // Check if the ref is valid
+  useEffect(() => {
+    if (!printRef.current) {
+      console.error('Print ref is not initialized');
+    }
+  }, []);
+
   // Handle print function using react-to-print
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    onBeforeprint: () => setIsPrinting(true),
+    contentRef: printRef,
+    onBeforePrint: () => {
+      setIsPrinting(true);
+      return Promise.resolve(); // Explicitly return a resolved Promise
+    },
     onAfterPrint: () => setIsPrinting(false),
-    documentTitle: `Invoice-${invoiceId}`
+    documentTitle: `Invoice-${invoiceId}`,
+    onPrintError: (errorLocation, error) => {
+      console.error(`Print error at ${errorLocation}:`, error);
+      // Fallback to manual printing
+      handleManualPrint();
+    }
   });
 
   // Handle back/close button
@@ -211,6 +231,30 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           </div>
         </div>
       </div>
+      
+      {/* Add print-specific styles */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .invoice-container,
+          .invoice-container * {
+            visibility: visible;
+          }
+          .invoice-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+          }
+          @page {
+            size: auto;
+            margin: 10mm;
+          }
+        }
+      `}</style>
     </div>
   );
 } 
