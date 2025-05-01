@@ -215,6 +215,14 @@ export default function PlanUpgrade({ customerId }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
+                      4,500 points added to account on signup
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p className="ml-3 text-sm text-gray-600 dark:text-gray-300">
                       Up to 3 members allowed
                     </p>
                   </div>
