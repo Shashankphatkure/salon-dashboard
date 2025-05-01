@@ -15,28 +15,40 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
       initialCredit: 12500,
       monthlyBonus: 1000,
       maxUsagePerVisit: 70,
-      validityMonths: 12
+      validityMonths: 12,
+      discountPercentage: 50
     },
     silverPlus: {
       name: 'Silver Plus Membership',
       initialCredit: 7500,
       monthlyBonus: 500,
       maxUsagePerVisit: 50,
-      validityMonths: 12
+      validityMonths: 12,
+      discountPercentage: 38
     },
     silver: {
       name: 'Silver Membership',
       initialCredit: 0,
       monthlyBonus: 250,
       maxUsagePerVisit: 30,
-      validityMonths: 12
+      validityMonths: 12,
+      discountPercentage: 30
+    },
+    nonMembership: {
+      name: 'Non-Membership Credit',
+      initialCredit: 0, // Will be calculated based on the plan
+      monthlyBonus: 0,
+      maxUsagePerVisit: 70, // 70% max for non-membership plans
+      validityMonths: 6,
+      discountPercentage: 0 // Will be calculated based on plan value
     },
     standard: {
       name: 'Standard Credit',
       initialCredit: 0,
       monthlyBonus: 0,
       maxUsagePerVisit: 20,
-      validityMonths: 6
+      validityMonths: 6,
+      discountPercentage: 0
     }
   };
 
@@ -67,11 +79,56 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
     };
     
     fetchTransactions();
-  }, [customerData]);
+  }, [customerData, supabase]);
+
+  // Calculate credit details based on membership type
+  const calculateNonMembershipDetails = () => {
+    const membershipType = customerData?.membership_type || '';
+    let initialCredit = 0;
+    let discountPercentage = 0;
+    let planAmount = 0;
+    
+    // Extract plan amount from membership type
+    if (membershipType.includes('10k')) {
+      planAmount = 10000;
+      initialCredit = 13000;
+      discountPercentage = 30;
+    } else if (membershipType.includes('20k')) {
+      planAmount = 20000;
+      initialCredit = 27600;
+      discountPercentage = 38;
+    } else if (membershipType.includes('30k')) {
+      planAmount = 30000;
+      initialCredit = 40500;
+      discountPercentage = 35;
+    } else if (membershipType.includes('50k')) {
+      planAmount = 50000;
+      initialCredit = 75000;
+      discountPercentage = 50;
+    }
+    
+    return {
+      initialCredit,
+      discountPercentage,
+      planAmount
+    };
+  };
 
   // Calculate credit details based on membership and transactions
   const calculateCreditDetails = () => {
-    const planDetails = membershipCreditDetails[planType] || membershipCreditDetails.standard;
+    let planDetails = { ...membershipCreditDetails[planType] };
+    
+    // Handle special calculations for Non-Membership plans
+    if (planType === 'nonMembership') {
+      const nonMembershipDetails = calculateNonMembershipDetails();
+      planDetails = {
+        ...planDetails,
+        initialCredit: nonMembershipDetails.initialCredit,
+        discountPercentage: nonMembershipDetails.discountPercentage,
+        planAmount: nonMembershipDetails.planAmount,
+        name: `Non-Membership Plan (₹${nonMembershipDetails.planAmount.toLocaleString()})`
+      };
+    }
     
     // If no customer data, return default values
     if (!customerData) {
@@ -87,8 +144,8 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
     }
     
     // Membership start date or fallback to join date
-    const startDate = customerData.memberships && customerData.memberships[0]?.start_date 
-      ? new Date(customerData.memberships[0].start_date) 
+    const startDate = customerData.activeMembership?.start_date 
+      ? new Date(customerData.activeMembership.start_date) 
       : new Date(customerData.join_date);
     
     // Calculate validity end date
@@ -108,7 +165,12 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
     ) * planDetails.monthlyBonus;
     
     // Initial credit + monthly bonuses
-    const totalCreditEarned = planDetails.initialCredit + monthlyBonusEarned;
+    let totalCreditEarned = planDetails.initialCredit + monthlyBonusEarned;
+    
+    // For membership plans with points, use the points_balance
+    if (planType !== 'nonMembership' && planType !== 'standard' && customerData.activeMembership) {
+      totalCreditEarned = customerData.points_balance;
+    }
     
     // Calculate used credit from transactions
     const usedCredit = transactions.reduce((total, transaction) => 
@@ -120,7 +182,7 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
     return {
       ...planDetails,
       totalAmount: totalCreditEarned,
-      paidAmount: customerData.membership_fee || 0,
+      paidAmount: planType === 'nonMembership' ? planDetails.planAmount || 0 : 0,
       bonusAmount: planDetails.initialCredit,
       remainingCredit: remainingCredit,
       usedCredit: usedCredit,
@@ -189,17 +251,23 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
             ></div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-4">
+            {planType === 'nonMembership' && (
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Plan Amount</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">₹{planData.paidAmount.toLocaleString()}</p>
+              </div>
+            )}
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Membership Fee</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">₹{planData.paidAmount.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Credit Value</p>
+              <p className="text-sm font-medium text-teal-600 dark:text-teal-400">₹{planData.bonusAmount.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Initial Credit</p>
-              <p className="text-sm font-medium text-teal-600 dark:text-teal-400">+₹{planData.bonusAmount.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Monthly Bonus</p>
-              <p className="text-sm font-medium text-teal-600 dark:text-teal-400">+₹{planData.monthlyBonus.toLocaleString()}/month</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{planType !== 'nonMembership' ? 'Monthly Bonus' : 'Discount'}</p>
+              {planType !== 'nonMembership' ? (
+                <p className="text-sm font-medium text-teal-600 dark:text-teal-400">+₹{planData.monthlyBonus.toLocaleString()}/month</p>
+              ) : (
+                <p className="text-sm font-medium text-teal-600 dark:text-teal-400">{planData.discountPercentage}% off services</p>
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Used Credit</p>
@@ -297,9 +365,10 @@ const CreditPlanDetails = ({ planType = 'standard', customerData }) => {
             This credit is valid until {new Date(planData.validUntil).toLocaleDateString()} 
             - {daysRemaining > 0 ? 'make sure to use it before it expires!' : 'it has expired.'}
           </p>
-          {planType !== 'standard' && (
+          {planData.discountPercentage > 0 && (
             <p className="mt-4 bg-teal-50 dark:bg-teal-900/20 p-3 rounded-lg">
-              <span className="font-semibold">Membership benefit:</span> Receive ₹{planData.monthlyBonus.toLocaleString()} in bonus credit every month.
+              <span className="font-semibold">Plan benefit:</span> Get {planData.discountPercentage}% off on all services.
+              {planType !== 'nonMembership' && planData.monthlyBonus > 0 && ` Plus, receive ₹${planData.monthlyBonus.toLocaleString()} in bonus credit every month.`}
             </p>
           )}
         </div>

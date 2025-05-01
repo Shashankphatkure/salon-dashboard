@@ -28,7 +28,7 @@ function CreditPlanContent() {
           return;
         }
         
-        // Fetch customer data
+        // Fetch customer data with their membership information
         const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .select('*, memberships(*)')
@@ -43,7 +43,17 @@ function CreditPlanContent() {
           return;
         }
         
-        setCustomerData(customerData);
+        // Get the active membership if available
+        const activeMembership = customerData.memberships?.find(m => m.active === true);
+        
+        // Enhanced customer data with membership details
+        const enhancedCustomerData = {
+          ...customerData,
+          activeMembership: activeMembership || null,
+          points_balance: activeMembership?.points_balance || 0
+        };
+        
+        setCustomerData(enhancedCustomerData);
         
       } catch (error) {
         console.error('Error fetching customer data:', error);
@@ -54,19 +64,26 @@ function CreditPlanContent() {
     };
     
     fetchCustomerData();
-  }, [customerId]);
+  }, [customerId, supabase]);
   
   // Determine credit plan based on membership type
   const getPlanType = () => {
     if (!customerData) return 'standard';
     
-    switch (customerData.membership_type) {
+    const membershipType = customerData.membership_type;
+    
+    switch (membershipType) {
       case 'Gold':
         return 'gold';
       case 'Silver Plus':
         return 'silverPlus';
       case 'Silver':
         return 'silver';
+      case 'Non-Membership-10k':
+      case 'Non-Membership-20k':
+      case 'Non-Membership-30k':
+      case 'Non-Membership-50k':
+        return 'nonMembership';
       default:
         return 'standard';
     }
