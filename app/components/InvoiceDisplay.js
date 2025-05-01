@@ -181,14 +181,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                       ₹{totalAmount.toLocaleString()}
                     </td>
                   </tr>
-                  <tr>
-                    <td colSpan="4" className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
-                      Discount
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                      ₹0.00
-                    </td>
-                  </tr>
+                  
                   <tr className="bg-gray-50">
                     <td colSpan="4" className="px-6 py-4 whitespace-nowrap text-right text-base font-bold text-gray-900">
                       TOTAL
