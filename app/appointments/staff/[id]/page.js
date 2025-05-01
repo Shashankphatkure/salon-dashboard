@@ -20,6 +20,8 @@ export default function StaffAppointmentsPage({ params }) {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [tableExists, setTableExists] = useState(true);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -50,7 +52,13 @@ export default function StaffAppointmentsPage({ params }) {
         if (appointmentsExist) {
           try {
             // Fetch appointments for this staff member
-            const appointmentsData = await getAppointments({ staffId: id });
+            const filters = { staffId: id };
+            
+            // Add date filters if provided
+            if (dateFrom) filters.dateFrom = dateFrom;
+            if (dateTo) filters.dateTo = dateTo;
+            
+            const appointmentsData = await getAppointments(filters);
             setAppointments(appointmentsData || []);
           } catch (appointmentError) {
             console.error('Error fetching appointments:', appointmentError);
@@ -72,7 +80,7 @@ export default function StaffAppointmentsPage({ params }) {
     if (user) {
       fetchData();
     }
-  }, [user, authLoading, router, id]);
+  }, [user, authLoading, router, id, dateFrom, dateTo]);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -94,6 +102,14 @@ export default function StaffAppointmentsPage({ params }) {
   const filteredAppointments = filterStatus === 'all' 
     ? appointments 
     : appointments.filter(appointment => appointment.status === filterStatus);
+  
+  // Calculate total amount from filtered appointments
+  const totalAmount = filteredAppointments.reduce((sum, appointment) => {
+    return sum + (appointment.total_price || 0);
+  }, 0);
+  
+  // Today's date as default max for date inputs
+  const today = new Date().toISOString().split('T')[0];
   
   if (authLoading || loading) {
     return (
@@ -152,18 +168,6 @@ export default function StaffAppointmentsPage({ params }) {
             </div>
             
             <div className="flex items-center gap-4">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="all">All Appointments</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-              
               <button
                 onClick={() => router.push('/book-appointment')}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2"
@@ -173,6 +177,74 @@ export default function StaffAppointmentsPage({ params }) {
                 </svg>
                 Book New Appointment
               </button>
+            </div>
+          </div>
+          
+          {/* Filter controls */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="all">All Appointments</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  max={today}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setDateFrom('');
+                    setDateTo('');
+                    setFilterStatus('all');
+                  }}
+                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Total amount display */}
+          <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-xl shadow-sm mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-purple-700 dark:text-purple-400 font-medium">Filtered Results: </span>
+                <span className="text-gray-700 dark:text-gray-300">{filteredAppointments.length} appointments</span>
+              </div>
+              <div>
+                <span className="text-purple-700 dark:text-purple-400 font-medium">Total Amount: </span>
+                <span className="text-gray-900 dark:text-white font-bold">₹{totalAmount.toLocaleString()}</span>
+              </div>
             </div>
           </div>
           
@@ -275,8 +347,8 @@ export default function StaffAppointmentsPage({ params }) {
                 {tableExists ? (
                   <p className="text-gray-500 dark:text-gray-400 mb-6">
                     {filterStatus === 'all' 
-                      ? `${staff.name} doesn't have any appointments yet.` 
-                      : `No ${filterStatus} appointments found for ${staff.name}.`}
+                      ? `${staff.name} doesn't have any appointments${dateFrom || dateTo ? ' in the selected date range' : ''}.` 
+                      : `No ${filterStatus} appointments found for ${staff.name}${dateFrom || dateTo ? ' in the selected date range' : ''}.`}
                   </p>
                 ) : (
                   <div className="text-amber-600 dark:text-amber-400 mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg mb-6 mx-auto max-w-md">
