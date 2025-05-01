@@ -116,7 +116,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
     } else if (membershipType === 'Silver') {
       maxCreditPercentage = 30; // Silver: 30% discount per plan
     } else if (membershipType.includes('Non-Membership-10k')) {
-      maxCreditPercentage = 30; // 10k plan: 30% off
+      maxCreditPercentage = 70; // 10k plan: 30% off
     } else if (membershipType.includes('Non-Membership-20k')) {
       maxCreditPercentage = 38; // 20k plan: 38% off
     } else if (membershipType.includes('Non-Membership-30k')) {
