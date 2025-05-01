@@ -76,14 +76,34 @@ function MembershipContent() {
         
       if (error) throw error;
       
-      // Also add a record to memberships table for history
+      // Calculate initial points based on the plan type
+      let initialPoints = 0;
+      
+      if (planType === 'Non-Membership-10k') {
+        initialPoints = 13000;
+      } else if (planType === 'Non-Membership-20k') {
+        initialPoints = 27600;
+      } else if (planType === 'Non-Membership-30k') {
+        initialPoints = 40500;
+      } else if (planType === 'Non-Membership-50k') {
+        initialPoints = 75000;
+      } else if (planType === 'Silver') {
+        initialPoints = 0; // Starting points for Silver
+      } else if (planType === 'Silver Plus') {
+        initialPoints = 7500; // Starting points for Silver Plus
+      } else if (planType === 'Gold') {
+        initialPoints = 12500; // Starting points for Gold
+      }
+      
+      // Also add a record to memberships table for history with points balance
       const { error: membershipError } = await supabase
         .from('memberships')
         .insert({
           customer_id: selectedCustomer,
           membership_type: planType,
           start_date: new Date(),
-          active: true
+          active: true,
+          points_balance: initialPoints
         });
       
       if (membershipError) {
@@ -91,7 +111,7 @@ function MembershipContent() {
         // Don't stop the flow if this fails
       }
       
-      alert(`Assigned ${planType} membership to customer ID: ${selectedCustomer}`);
+      alert(`Assigned ${planType} membership to customer ID: ${selectedCustomer} with ${initialPoints} initial points`);
       
       // Redirect back to customer page
       router.push(`/customers?updatedMembership=${selectedCustomer}`);
