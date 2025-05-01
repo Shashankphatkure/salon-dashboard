@@ -24,17 +24,28 @@ const CustomersList = () => {
     anniversary: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortBy, setSortBy] = useState('joinDate');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   // Fetch customers from Supabase
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
+      
+      // Map frontend field names to database column names
+      const columnMap = {
+        'joinDate': 'join_date',
+        'lastVisit': 'last_visit',
+        'totalSpent': 'total_spent',
+        'membershipType': 'membership_type'
+      };
+      
+      const orderByColumn = columnMap[sortBy] || sortBy;
+      
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .order(sortBy, { ascending: sortDirection === 'asc' });
+        .order(orderByColumn, { ascending: sortDirection === 'asc' });
         
       if (error) throw error;
       
@@ -280,6 +291,14 @@ const CustomersList = () => {
               </th>
               <th 
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort('joinDate')}
+              >
+                <div className="flex items-center">
+                  Join Date {renderSortIcon('joinDate')}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('lastVisit')}
               >
                 <div className="flex items-center">
@@ -332,6 +351,9 @@ const CustomersList = () => {
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {customer.visits} visits
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(customer.joinDate).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {new Date(customer.lastVisit).toLocaleDateString()}
