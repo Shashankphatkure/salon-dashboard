@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { getAppointments, getCustomerById } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
 
 export default function InvoicePage() {
   const { user, loading: authLoading } = useAuth();
@@ -52,22 +53,73 @@ export default function InvoicePage() {
             }
           }
           
-          // Calculate total price from services if available
+          // Calculate total price from services with membership discount
           let totalPrice = appointment.total_price || 0;
           if (appointment.services && appointment.services.length > 0) {
+            let discountPercent = 0;
+            const membershipType = customerInfo?.membership_type;
+            
+            if (membershipType) {
+              // Set discount percentage based on membership type
+              if (membershipType.includes('Gold')) {
+                discountPercent = 50;
+              } else if (membershipType.includes('Silver Plus')) {
+                discountPercent = 38;
+              } else if (membershipType.includes('Silver')) {
+                discountPercent = 30;
+              } else if (membershipType.includes('Non-Membership-10k')) {
+                discountPercent = 30;
+              } else if (membershipType.includes('Non-Membership-20k')) {
+                discountPercent = 38;
+              } else if (membershipType.includes('Non-Membership-30k')) {
+                discountPercent = 35;
+              } else if (membershipType.includes('Non-Membership-50k')) {
+                discountPercent = 50;
+              }
+            }
+            
+            // Calculate total with discount
             totalPrice = appointment.services.reduce((total, service) => {
-              const servicePrice = service.price || (service.service && service.service.price) || 0;
-              return total + parseFloat(servicePrice);
+              const basePrice = service.price || (service.service && service.service.price) || 0;
+              const discountedPrice = basePrice * (1 - (discountPercent / 100));
+              return total + parseFloat(discountedPrice);
             }, 0);
+            
+            // Round to 2 decimal places
+            totalPrice = Math.round(totalPrice * 100) / 100;
           }
           
+          // Check if there's a transaction associated with this appointment
+          let creditUsed = 0;
+          const invoiceId = `INV-${appointment.id.substring(0, 6)}`;
+          
+          try {
+            const { data: transactionData } = await supabase
+              .from('transactions')
+              .select('credit_used')
+              .eq('appointment_id', appointment.id)
+              .limit(1);
+              
+            if (transactionData && transactionData.length > 0) {
+              creditUsed = transactionData[0].credit_used || 0;
+            }
+          } catch (err) {
+            console.error(`Error fetching transaction for ${invoiceId}:`, err);
+          }
+          
+          // Calculate final amount after credit
+          const finalAmount = Math.max(0, totalPrice - creditUsed);
+          
           processedInvoices.push({
-            id: `INV-${appointment.id.substring(0, 6)}`,
+            id: invoiceId,
             appointment_id: appointment.id,
             customer: customerInfo?.name || 'Unknown Customer',
             customer_id: appointment.customer_id,
             date: appointment.date,
             amount: totalPrice,
+            creditUsed: creditUsed,
+            finalAmount: finalAmount,
+            membership: customerInfo?.membership_type,
             status: appointment.status === 'completed' ? 'Paid' : 'Pending',
             appointment: appointment,
             customerInfo: customerInfo
@@ -227,12 +279,22 @@ export default function InvoicePage() {
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {invoice.customerInfo?.phone || ''}
                           </div>
+                          {invoice.membership && (
+                            <div className="text-xs text-teal-600 dark:text-teal-400 mt-1">
+                              {invoice.membership}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 dark:text-white">{formatDate(invoice.date)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">₹{parseFloat(invoice.amount).toLocaleString()}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">₹{parseFloat(invoice.finalAmount).toLocaleString()}</div>
+                          {invoice.creditUsed > 0 && (
+                            <div className="text-xs text-teal-600 dark:text-teal-400">
+                              Credit: ₹{parseFloat(invoice.creditUsed).toLocaleString()}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -251,7 +313,7 @@ export default function InvoicePage() {
                             View
                           </button>
                           <button
-                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
                             onClick={() => handlePrintInvoice(invoice)}
                           >
                             Print

@@ -112,9 +112,38 @@ export default function AppointmentDetailPage({ params }) {
   const calculateTotalAmount = () => {
     if (!appointment || !appointment.services) return 0;
     
-    return appointment.services.reduce((total, serviceItem) => {
-      return total + (serviceItem.service?.price || 0);
+    let total = appointment.services.reduce((total, serviceItem) => {
+      const basePrice = serviceItem.service?.price || 0;
+      
+      // Apply discount based on membership if available
+      let discountPercent = 0;
+      const membershipType = appointment.customers?.membership_type;
+      
+      if (membershipType) {
+        // Set discount percentage based on membership type
+        if (membershipType.includes('Gold')) {
+          discountPercent = 50;
+        } else if (membershipType.includes('Silver Plus')) {
+          discountPercent = 38;
+        } else if (membershipType.includes('Silver')) {
+          discountPercent = 30;
+        } else if (membershipType.includes('Non-Membership-10k')) {
+          discountPercent = 30;
+        } else if (membershipType.includes('Non-Membership-20k')) {
+          discountPercent = 38;
+        } else if (membershipType.includes('Non-Membership-30k')) {
+          discountPercent = 35;
+        } else if (membershipType.includes('Non-Membership-50k')) {
+          discountPercent = 50;
+        }
+      }
+      
+      // Apply discount
+      const priceAfterDiscount = basePrice * (1 - (discountPercent / 100));
+      return total + priceAfterDiscount;
     }, 0);
+    
+    return Math.round(total * 100) / 100; // Round to 2 decimal places
   };
 
   // Handle generate invoice button click

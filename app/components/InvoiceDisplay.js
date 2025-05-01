@@ -2,15 +2,77 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function InvoiceDisplay({ appointment, onClose }) {
   const [isPrinting, setIsPrinting] = useState(false);
+  const [customerMembership, setCustomerMembership] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [creditApplied, setCreditApplied] = useState(0);
+  const [hasRecordedTransaction, setHasRecordedTransaction] = useState(false);
+  const supabase = createClientComponentClient();
   const printRef = useRef(null);
   
   // Generate invoice ID based on appointment ID
   const invoiceId = `INV-${appointment.id.substring(0, 6)}`;
   const services = appointment.services || [];
   const customerInfo = appointment.customers || {};
+
+  useEffect(() => {
+    const fetchCustomerMembership = async () => {
+      if (!customerInfo?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        // Fetch active membership for the customer
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('memberships')
+          .select('*')
+          .eq('customer_id', customerInfo.id)
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (membershipError && membershipError.code !== 'PGRST116') {
+          console.error('Error fetching membership:', membershipError);
+        }
+        
+        setCustomerMembership(membershipData || null);
+        
+        // Check if we've already recorded a transaction for this appointment
+        if (appointment.id) {
+          const { data: transactionData, error: transactionError } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('appointment_id', appointment.id)
+            .limit(1);
+            
+          if (transactionError) {
+            console.error('Error checking transaction:', transactionError);
+          }
+          
+          setHasRecordedTransaction(transactionData && transactionData.length > 0);
+          
+          // If there's a transaction, get the credit used
+          if (transactionData && transactionData.length > 0) {
+            setCreditApplied(transactionData[0].credit_used || 0);
+          } else if (membershipData) {
+            // Calculate credit to apply based on membership type
+            calculateCreditToApply(membershipData);
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCustomerMembership();
+  }, [appointment.id, customerInfo.id, invoiceId, supabase]);
 
   // Calculate total service amount
   const calculateTotalAmount = () => {
@@ -28,6 +90,89 @@ export default function InvoiceDisplay({ appointment, onClose }) {
   };
   
   const totalAmount = calculateTotalAmount();
+
+  // Calculate how much credit to apply based on membership
+  const calculateCreditToApply = (membership) => {
+    if (!membership) return;
+    
+    let maxCreditPercentage = 0;
+    let membershipType = customerInfo.membership_type || '';
+    
+    // Determine max credit percentage based on membership type
+    if (membershipType.includes('Gold')) {
+      maxCreditPercentage = 70;
+    } else if (membershipType.includes('Silver Plus')) {
+      maxCreditPercentage = 50;
+    } else if (membershipType.includes('Silver')) {
+      maxCreditPercentage = 30;
+    } else if (membershipType.includes('Non-Membership-10k')) {
+      maxCreditPercentage = 70;
+    } else if (membershipType.includes('Non-Membership-20k')) {
+      maxCreditPercentage = 70;
+    } else if (membershipType.includes('Non-Membership-30k')) {
+      maxCreditPercentage = 70;
+    } else if (membershipType.includes('Non-Membership-50k')) {
+      maxCreditPercentage = 70;
+    } else {
+      maxCreditPercentage = 20; // Default for standard plans
+    }
+    
+    // Calculate maximum credit that can be applied
+    const maxCreditAmount = Math.min(
+      membership.points_balance,
+      totalAmount * (maxCreditPercentage / 100)
+    );
+    
+    setCreditApplied(maxCreditAmount);
+  };
+
+  // Record transaction in the database
+  const recordTransaction = async () => {
+    if (hasRecordedTransaction || !customerInfo?.id || !appointment.id || creditApplied <= 0) {
+      return;
+    }
+    
+    try {
+      // Record the transaction
+      const transactionData = {
+        customer_id: customerInfo.id,
+        amount: totalAmount,
+        credit_used: creditApplied,
+        service_name: services.length > 0 
+          ? services.map(s => s.service?.name || 'Service').join(', ')
+          : 'Salon Service',
+        date: new Date(),
+        appointment_id: appointment.id
+      };
+      
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert([transactionData]);
+        
+      if (transactionError) {
+        console.error('Error recording transaction:', transactionError);
+        return;
+      }
+      
+      // Update membership points balance if there's an active membership
+      if (customerMembership && customerMembership.id) {
+        const newBalance = Math.max(0, customerMembership.points_balance - creditApplied);
+        
+        const { error: membershipError } = await supabase
+          .from('memberships')
+          .update({ points_balance: newBalance })
+          .eq('id', customerMembership.id);
+          
+        if (membershipError) {
+          console.error('Error updating membership balance:', membershipError);
+        }
+      }
+      
+      setHasRecordedTransaction(true);
+    } catch (error) {
+      console.error('Error in recordTransaction:', error);
+    }
+  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -60,9 +205,13 @@ export default function InvoiceDisplay({ appointment, onClose }) {
   // Handle print function using react-to-print
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    onBeforePrint: () => {
+    onBeforePrint: async () => {
       setIsPrinting(true);
-      return Promise.resolve(); // Explicitly return a resolved Promise
+      // Record transaction before printing
+      if (!hasRecordedTransaction && !isLoading && appointment.status === 'completed') {
+        await recordTransaction();
+      }
+      return Promise.resolve();
     },
     onAfterPrint: () => setIsPrinting(false),
     documentTitle: `Invoice-${invoiceId}`,
@@ -82,6 +231,9 @@ export default function InvoiceDisplay({ appointment, onClose }) {
       window.history.back();
     }
   };
+
+  // Calculate amount to pay after credit
+  const amountToPay = Math.max(0, totalAmount - creditApplied);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -139,6 +291,9 @@ export default function InvoiceDisplay({ appointment, onClose }) {
               <p className="text-gray-700 font-semibold">{customerInfo?.name || 'Guest Customer'}</p>
               <p className="text-gray-600">{customerInfo?.phone || ''}</p>
               <p className="text-gray-600">{customerInfo?.email || ''}</p>
+              {customerInfo?.membership_type && (
+                <p className="text-teal-600 font-medium mt-2">Membership: {customerInfo.membership_type}</p>
+              )}
             </div>
             
             <div className="overflow-x-auto mb-8">
@@ -203,12 +358,23 @@ export default function InvoiceDisplay({ appointment, onClose }) {
                     </td>
                   </tr>
                   
+                  {creditApplied > 0 && (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-teal-600">
+                        Credit Applied ({customerInfo?.membership_type || 'Membership'})
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-teal-600 text-right">
+                        -₹{creditApplied.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+                  
                   <tr className="bg-gray-50">
                     <td colSpan="4" className="px-6 py-4 whitespace-nowrap text-right text-base font-bold text-gray-900">
-                      TOTAL
+                      TOTAL DUE
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                      ₹{totalAmount.toLocaleString()}
+                      ₹{amountToPay.toLocaleString()}
                     </td>
                   </tr>
                 </tfoot>
@@ -220,7 +386,12 @@ export default function InvoiceDisplay({ appointment, onClose }) {
               <p className="text-gray-600">Payment Method: Cash</p>
               <p className="text-gray-600">Payment Date: {formatDate(appointment.completed_at || appointment.date)}</p>
               {customerInfo?.membership_type && (
-                <p className="text-gray-600">Membership Plan: {customerInfo.membership_type}</p>
+                <div className="mt-2">
+                  <p className="text-gray-600">Membership Plan: {customerInfo.membership_type}</p>
+                  {customerMembership && (
+                    <p className="text-gray-600">Membership Credit Balance: ₹{Math.max(0, (customerMembership.points_balance - creditApplied)).toLocaleString()}</p>
+                  )}
+                </div>
               )}
             </div>
             
@@ -249,9 +420,8 @@ export default function InvoiceDisplay({ appointment, onClose }) {
             width: 100%;
             padding: 20px;
           }
-          @page {
-            size: auto;
-            margin: 10mm;
+          button {
+            display: none !important;
           }
         }
       `}</style>
