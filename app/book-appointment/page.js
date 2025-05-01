@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import BookingStaffAvailability from '../components/BookingStaffAvailability';
 import { useAuth } from '../../lib/auth';
 import { useRouter } from 'next/navigation';
-import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers, createCustomer } from '../../lib/db';
+import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers, createCustomer, getBookedAppointments } from '../../lib/db';
 
 export default function BookAppointment() {
   const { user } = useAuth();
@@ -33,6 +33,7 @@ export default function BookAppointment() {
   const [searchQuery, setSearchQuery] = useState('');
   const [appointmentResults, setAppointmentResults] = useState([]);
   const [appointmentCustomer, setAppointmentCustomer] = useState(null);
+  const [bookedAppointments, setBookedAppointments] = useState([]);
 
   // Fetch services and staff on component mount
   useEffect(() => {
@@ -83,6 +84,12 @@ export default function BookAppointment() {
           const availabilityData = await getStaffAvailability(selectedDate);
           console.log('✅ Staff availability fetched:', availabilityData.length);
           setStaffAvailability(availabilityData);
+          
+          // Also fetch booked appointments for this date
+          console.log(`🔍 Fetching booked appointments for date: ${selectedDate}`);
+          const bookedData = await getBookedAppointments(selectedDate);
+          console.log('✅ Booked appointments fetched:', bookedData.length);
+          setBookedAppointments(bookedData);
         }
       } catch (err) {
         console.error('❌ Error fetching staff availability:', err);
@@ -457,6 +464,11 @@ export default function BookAppointment() {
     const currentHour = isToday ? new Date().getHours() : 0;
     const currentMinute = isToday ? new Date().getMinutes() : 0;
     
+    // Filter out time slots that are already booked for this staff
+    const bookedSlotsForStaff = bookedAppointments.filter(appointment => 
+      appointment.staff_id === selectedStaff.id
+    );
+    
     // If no staff slots found, provide default time slots (9am-8pm)
     if (staffSlots.length === 0) {
       console.log('No staff availability records found, using default schedule');
@@ -473,7 +485,14 @@ export default function BookAppointment() {
             continue;
           }
           
-          defaultTimeSlots.push(`${hour}:${minute === 0 ? '00' : minute}`);
+          const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
+          
+          // Check if this time slot overlaps with any booked appointments for this staff
+          const isBooked = isTimeSlotBooked(timeString, bookedSlotsForStaff);
+          
+          if (!isBooked) {
+            defaultTimeSlots.push(timeString);
+          }
         }
       }
       
@@ -495,6 +514,7 @@ export default function BookAppointment() {
         
         const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
         
+        // Check if this staff is available at this time according to their availability
         const isAvailable = staffSlots.some(slot => {
           // Parse time values into minutes for easier comparison
           const slotStartHour = parseInt(slot.start_time.split(':')[0], 10);
@@ -509,7 +529,11 @@ export default function BookAppointment() {
           return currentTime >= slotStartTime && currentTime < slotEndTime;
         });
         
-        if (isAvailable) {
+        // Check if this time slot overlaps with any booked appointments for this staff
+        const isBooked = isTimeSlotBooked(timeString, bookedSlotsForStaff);
+        
+        // Add to available slots only if staff is available and the slot is not booked
+        if (isAvailable && !isBooked) {
           timeSlots.push(timeString);
         }
       }
@@ -528,6 +552,33 @@ export default function BookAppointment() {
     
     console.log('Available time slots:', timeSlots);
     return timeSlots;
+  };
+
+  // Helper function to check if a time slot is already booked
+  const isTimeSlotBooked = (timeString, bookedSlots) => {
+    if (!bookedSlots || bookedSlots.length === 0) return false;
+    
+    // Convert the time string to minutes for easier comparison
+    const [hour, minute] = timeString.split(':').map(num => parseInt(num, 10));
+    const slotTimeInMinutes = hour * 60 + (minute || 0);
+    
+    // Duration of this slot - assuming 30 minutes
+    const slotEndTimeInMinutes = slotTimeInMinutes + 30;
+    
+    // Check against all booked slots for this staff
+    return bookedSlots.some(appointment => {
+      const [startHour, startMinute] = appointment.start_time.split(':').map(num => parseInt(num, 10));
+      const [endHour, endMinute] = appointment.end_time.split(':').map(num => parseInt(num, 10));
+      
+      const appointmentStartInMinutes = startHour * 60 + (startMinute || 0);
+      const appointmentEndInMinutes = endHour * 60 + (endMinute || 0);
+      
+      // Check if the time slots overlap
+      // A slot is booked if it starts during another appointment or if it ends during another appointment
+      return (slotTimeInMinutes >= appointmentStartInMinutes && slotTimeInMinutes < appointmentEndInMinutes) || 
+             (slotEndTimeInMinutes > appointmentStartInMinutes && slotEndTimeInMinutes <= appointmentEndInMinutes) ||
+             (slotTimeInMinutes <= appointmentStartInMinutes && slotEndTimeInMinutes >= appointmentEndInMinutes);
+    });
   };
 
   // Calculate total for all appointments
@@ -749,6 +800,30 @@ export default function BookAppointment() {
     // Convert starting time to minutes
     const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
     const startTotalMinutes = (startHour * 60) + (startMinute || 0);
+    
+    // Calculate end time in minutes
+    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
+    
+    // Check for conflicts with booked appointments
+    const bookedSlotsForStaff = bookedAppointments.filter(appointment => 
+      appointment.staff_id === selectedStaff.id
+    );
+    
+    // Check if any booked appointment overlaps with our proposed time slot
+    const hasConflict = bookedSlotsForStaff.some(appointment => {
+      const [apptStartHour, apptStartMinute] = appointment.start_time.split(':').map(num => parseInt(num, 10));
+      const [apptEndHour, apptEndMinute] = appointment.end_time.split(':').map(num => parseInt(num, 10));
+      
+      const apptStartTotalMinutes = (apptStartHour * 60) + (apptStartMinute || 0);
+      const apptEndTotalMinutes = (apptEndHour * 60) + (apptEndMinute || 0);
+      
+      // Check if the time slots overlap
+      return (startTotalMinutes >= apptStartTotalMinutes && startTotalMinutes < apptEndTotalMinutes) || 
+            (endTotalMinutes > apptStartTotalMinutes && endTotalMinutes <= apptEndTotalMinutes) ||
+            (startTotalMinutes <= apptStartTotalMinutes && endTotalMinutes >= apptEndTotalMinutes);
+    });
+    
+    if (hasConflict) return false;
     
     // Check that each following slot is 30 minutes apart from the previous one
     for (let i = 1; i < durationSlots; i++) {
@@ -1100,6 +1175,12 @@ export default function BookAppointment() {
                 Staff Availability for {new Date(selectedDate).toLocaleDateString()}
               </h2>
               
+              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p>
+                  <span className="font-medium">Note:</span> Red slots indicate times that are already booked and unavailable for selection. Gray slots indicate times when staff are not scheduled to work.
+                </p>
+              </div>
+              
               <BookingStaffAvailability
                 staff={staff}
                 staffAvailability={staffAvailability}
@@ -1115,6 +1196,7 @@ export default function BookAppointment() {
                 formatTime={formatTime}
                 formatDuration={formatDuration}
                 getEndTimeFromDuration={getEndTimeFromDuration}
+                bookedAppointments={bookedAppointments}
               />
             </div>
             

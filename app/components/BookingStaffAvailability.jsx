@@ -16,7 +16,8 @@ export default function BookingStaffAvailability({
   canFitDuration,
   formatTime,
   formatDuration,
-  getEndTimeFromDuration
+  getEndTimeFromDuration,
+  bookedAppointments = []
 }) {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [blockedSlots, setBlockedSlots] = useState({});
@@ -31,43 +32,57 @@ export default function BookingStaffAvailability({
     }
   }, [selectedStaff, getAvailableTimeSlots]);
 
-  // Mock function to simulate time blocking logic
-  // In a real app, this would use actual booking data from your database
+  // Use real booking data instead of mock data
   useEffect(() => {
-    // Create demo blocks (this would come from your database in a real app)
-    const mockBlockedSlots = {};
+    const realBlockedSlots = {};
     
+    // Initialize for all staff
     staff.forEach(staffMember => {
-      mockBlockedSlots[staffMember.id] = {};
+      realBlockedSlots[staffMember.id] = {};
+    });
+    
+    // Populate with actual booked appointments
+    bookedAppointments.forEach(appointment => {
+      const staffId = appointment.staff_id;
+      if (!staffId) return;
       
-      // Generate some random blocks for demo purposes
-      if (Math.random() > 0.3) { // 70% chance to have blocks
-        const numBlocks = Math.floor(Math.random() * 3) + 1; // 1-3 blocks
+      // Get start time and end time
+      const startTime = appointment.start_time;
+      const endTime = appointment.end_time;
+      
+      if (!startTime || !endTime) return;
+      
+      // Calculate all 30-minute slots that are blocked by this appointment
+      const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
+      const [endHour, endMinute] = endTime.split(':').map(num => parseInt(num, 10));
+      
+      const startTotalMinutes = startHour * 60 + (startMinute || 0);
+      const endTotalMinutes = endHour * 60 + (endMinute || 0);
+      
+      // Mark all 30-minute slots within this appointment as blocked
+      for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 30) {
+        const slotHour = Math.floor(minutes / 60);
+        const slotMinute = minutes % 60;
         
-        for (let i = 0; i < numBlocks; i++) {
-          const startHour = Math.floor(Math.random() * 8) + 9; // 9 AM to 5 PM
-          const duration = Math.floor(Math.random() * 4) + 1; // 1-4 slots (30 min to 2 hours)
-          
-          // Block consecutive slots
-          for (let j = 0; j < duration; j++) {
-            const time = `${startHour + Math.floor(j/2)}:${j % 2 === 0 ? '00' : '30'}`;
-            
-            if (!mockBlockedSlots[staffMember.id][time]) {
-              mockBlockedSlots[staffMember.id][time] = {
-                customerName: ['Rahul', 'Priya', 'Amir', 'Neha', 'Vikram'][Math.floor(Math.random() * 5)],
-                service: ['Haircut', 'Coloring', 'Styling', 'Spa', 'Facial'][Math.floor(Math.random() * 5)],
-                endTime: duration,
-                isActive: true,
-                startTime: new Date().getTime() - (Math.random() * 3600000) // Random start time within last hour
-              };
-            }
-          }
+        // Skip if outside business hours (9am-8pm)
+        if (slotHour < 9 || slotHour > 20 || (slotHour === 20 && slotMinute > 0)) continue;
+        
+        const timeSlot = `${slotHour}:${slotMinute === 0 ? '00' : slotMinute}`;
+        
+        if (!realBlockedSlots[staffId][timeSlot]) {
+          realBlockedSlots[staffId][timeSlot] = {
+            appointmentId: appointment.id,
+            service: 'Booked', // We could fetch the actual service if needed
+            isActive: true,
+            startTime: startTotalMinutes,
+            endTime: endTotalMinutes
+          };
         }
       }
     });
     
-    setBlockedSlots(mockBlockedSlots);
-  }, [staff, selectedDate]);
+    setBlockedSlots(realBlockedSlots);
+  }, [staff, bookedAppointments, selectedDate]);
 
   // Handle duration change directly
   const handleDurationChange = (e, timeSlot) => {
@@ -154,6 +169,11 @@ export default function BookingStaffAvailability({
       
       return slotMinutes >= startMinutes && slotMinutes < endMinutes;
     });
+  };
+
+  // Check if a time slot is blocked by a booked appointment
+  const isTimeSlotBooked = (staffId, timeSlot) => {
+    return blockedSlots[staffId] && blockedSlots[staffId][timeSlot];
   };
 
   return (
@@ -307,7 +327,7 @@ export default function BookingStaffAvailability({
                               })() : false;
                               
                               // Check if the time slot is blocked
-                              const isBlocked = blockedSlots[person.id] && blockedSlots[person.id][time];
+                              const isBlocked = isTimeSlotBooked(person.id, time);
                               // Check if available via staff_availability
                               const isAvailable = isTimeSlotAvailable(person.id, time);
                               
