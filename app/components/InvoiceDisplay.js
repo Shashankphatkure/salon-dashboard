@@ -50,8 +50,7 @@ export default function InvoiceDisplay({ appointment, onClose }) {
     content: () => printRef.current,
     onBeforeprint: () => setIsPrinting(true),
     onAfterPrint: () => setIsPrinting(false),
-    documentTitle: `Invoice-${invoiceId}`,
-    removeAfterPrint: true
+    documentTitle: `Invoice-${invoiceId}`
   });
 
   // Handle back/close button
@@ -86,8 +85,8 @@ export default function InvoiceDisplay({ appointment, onClose }) {
           </div>
         </div>
         
-        <div ref={printRef} className="p-6 bg-white">
-          <div className="invoice-container">
+        <div className="p-6 bg-white">
+          <div ref={printRef} className="invoice-container">
             <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
               <div className="flex items-start">
                 <div className="mr-4 w-20 h-20 relative">
