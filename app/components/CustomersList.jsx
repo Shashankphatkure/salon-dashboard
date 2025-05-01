@@ -120,10 +120,10 @@ const CustomersList = () => {
           .update({
             name: selectedCustomer.name,
             phone: selectedCustomer.phone,
-            birthdate: selectedCustomer.birthdate,
+            birthdate: selectedCustomer.birthdate || null,
             gender: selectedCustomer.gender,
             address: selectedCustomer.address,
-            anniversary: selectedCustomer.anniversary,
+            anniversary: selectedCustomer.anniversary || null,
             updated_at: new Date()
           })
           .eq('id', selectedCustomer.id);
@@ -139,10 +139,10 @@ const CustomersList = () => {
           .insert({
             name: newCustomer.name,
             phone: newCustomer.phone,
-            birthdate: newCustomer.birthdate,
+            birthdate: newCustomer.birthdate || null,
             gender: newCustomer.gender,
             address: newCustomer.address,
-            anniversary: newCustomer.anniversary,
+            anniversary: newCustomer.anniversary || null,
             membership_type: newCustomer.membershipType || 'None',
             join_date: today,
             last_visit: today,
