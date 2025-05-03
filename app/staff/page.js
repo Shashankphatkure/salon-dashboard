@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../../lib/auth';
-import { getStaff, getStaffAvailability, updateStaffAvailability } from '../../lib/db';
+import { getStaff, getStaffAvailability, updateStaffAvailability, deleteStaff } from '../../lib/db';
 
 export default function StaffPage() {
   const { user, loading: authLoading } = useAuth();
@@ -19,6 +19,10 @@ export default function StaffPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
   const [blockedTimers, setBlockedTimers] = useState({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Generate time slots from 9am to 10:30pm with 30-minute intervals
   useEffect(() => {
@@ -257,6 +261,49 @@ export default function StaffPage() {
     }
   };
 
+  // Handle staff deletion
+  const handleDelete = async () => {
+    if (!selectedStaffId) {
+      setDeleteError('No staff selected');
+      return;
+    }
+    
+    if (!deletePassword) {
+      setDeleteError('Password is required for deletion');
+      return;
+    }
+    
+    try {
+      setDeleteLoading(true);
+      setDeleteError('');
+      
+      // Call the deleteStaff function with the staff ID and password
+      await deleteStaff(selectedStaffId, deletePassword);
+      
+      // Update the local staff list
+      setStaff(staff.filter(s => s.id !== selectedStaffId));
+      setSelectedStaffId(null);
+      setShowDeleteModal(false);
+      setDeletePassword('');
+      setSuccess('Staff member deleted successfully');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error deleting staff:', err);
+      setDeleteError('Failed to delete staff. Please check your password and try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+  
+  // Cancel deletion modal
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    setDeleteError('');
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
@@ -484,6 +531,12 @@ export default function StaffPage() {
                         >
                           Edit Operator
                         </button>
+                        <button 
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                          onClick={() => setShowDeleteModal(true)}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </>
                   )}
@@ -492,6 +545,53 @@ export default function StaffPage() {
             )}
           </div>
         </div>
+        
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Confirm Deletion</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to delete {staff.find(s => s.id === selectedStaffId)?.name}? This action cannot be undone.
+              </p>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 dark:text-gray-300 mb-2">
+                  Enter admin password to confirm
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter password"
+                />
+              </div>
+              
+              {deleteError && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-sm text-red-700 dark:text-red-300">
+                  {deleteError}
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
+                  onClick={cancelDelete}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
+                  onClick={handleDelete}
+                  disabled={deleteLoading || !deletePassword}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
