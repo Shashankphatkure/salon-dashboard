@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../../lib/auth';
-import { getAppointments } from '../../lib/db';
+import { getAppointments, deleteAppointment } from '../../lib/db';
 
 export default function AppointmentsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -13,6 +13,39 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  
+  // Handle appointment deletion with password protection
+  const handleDeleteAppointment = async (appointmentId) => {
+    // First confirmation
+    if (!window.confirm("Are you sure you want to delete this appointment? This action cannot be undone.")) {
+      return;
+    }
+    
+    // Password protection for delete action
+    const password = prompt("Please enter admin password to delete:");
+    if (!password) return;
+    
+    try {
+      // In a real app, you'd validate this on the server side
+      // Here we're using a simple check for demo purposes
+      if (password === "admin123") {
+        setLoading(true);
+        await deleteAppointment(appointmentId);
+        
+        // Update appointments list after deletion
+        const updatedAppointments = appointments.filter(app => app.id !== appointmentId);
+        setAppointments(updatedAppointments);
+        alert("Appointment deleted successfully!");
+      } else {
+        alert("Incorrect password. Delete operation cancelled.");
+      }
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      alert("Failed to delete appointment. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -204,6 +237,12 @@ export default function AppointmentsPage() {
                             onClick={() => router.push(`/appointments/${appointment.id}`)}
                           >
                             View
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            onClick={() => handleDeleteAppointment(appointment.id)}
+                          >
+                            Delete
                           </button>
                         </td>
                       </tr>
