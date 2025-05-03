@@ -480,16 +480,16 @@ export default function BookAppointment() {
       appointment.staff_id === selectedStaff.id
     );
     
-    // If no staff slots found, provide default time slots (9am-8pm)
+    // If no staff slots found, provide default time slots (9am-10:30pm)
     if (staffSlots.length === 0) {
       console.log('No staff availability records found, using default schedule');
       
-      // Return all possible 30-minute slots from 9am to 8pm as default
+      // Return all possible 30-minute slots from 9am to 10:30pm as default
       const defaultTimeSlots = [];
-      for (let hour = 9; hour <= 20; hour++) {
+      for (let hour = 9; hour <= 22; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
-          // Skip 8:30 PM slot
-          if (hour === 20 && minute === 30) continue;
+          // Skip slots after 10:30 PM
+          if (hour > 22 || (hour === 22 && minute > 30)) continue;
           
           // Skip past time slots if it's today
           if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
@@ -514,11 +514,11 @@ export default function BookAppointment() {
     
     const timeSlots = [];
     
-    // Generate time slots from 9am to 8pm in 30-minute intervals
-    for (let hour = 9; hour <= 20; hour++) {
+    // Generate time slots from 9am to 10:30pm in 30-minute intervals
+    for (let hour = 9; hour <= 22; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        // Skip 8:30 PM slot
-        if (hour === 20 && minute === 30) continue;
+        // Skip slots after 10:30 PM
+        if (hour > 22 || (hour === 22 && minute > 30)) continue;
         
         // Skip past time slots if it's today
         if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
