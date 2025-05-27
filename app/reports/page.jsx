@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import Navbar from '../components/Navbar';
+import DailyReport from '../components/DailyReport';
 import { getAppointments, getMembershipPlans } from '../../lib/db';
 
 export default function Reports() {
@@ -21,6 +22,7 @@ export default function Reports() {
   const [revenueStats, setRevenueStats] = useState(null);
   const [topServices, setTopServices] = useState([]);
   const [dateRange, setDateRange] = useState('last30days');
+  const [activeReportType, setActiveReportType] = useState('overview'); // 'overview' or 'daily'
 
   // Check if user has admin role
   useEffect(() => {
@@ -327,6 +329,37 @@ export default function Reports() {
           </p>
         </div>
 
+        {/* Report Type Navigation */}
+        <div className="mb-8">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => setActiveReportType('overview')}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeReportType === 'overview'
+                  ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+            >
+              Overview Reports
+            </button>
+            <button
+              onClick={() => setActiveReportType('daily')}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeReportType === 'daily'
+                  ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+            >
+              Daily Report
+            </button>
+          </div>
+        </div>
+
+        {/* Conditional Content Based on Report Type */}
+        {activeReportType === 'daily' ? (
+          <DailyReport />
+        ) : (
+          <>
         {/* Date Selector */}
         <div className="mb-8 flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-4">
@@ -509,6 +542,11 @@ export default function Reports() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 justify-center">
+          <Link href="/reports/daily">
+            <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg">
+              View Daily Report
+            </button>
+          </Link>
           <Link href="/dashboard">
             <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg">
               View Member Dashboard
@@ -520,6 +558,8 @@ export default function Reports() {
             </button>
           </Link>
         </div>
+          </>
+        )}
       </div>
 
       {/* Footer */}

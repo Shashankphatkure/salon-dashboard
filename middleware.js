@@ -17,7 +17,8 @@ const protectedPaths = [
 
 // Special case for reports - only admins can access
 const adminOnlyPaths = [
-  '/reports'
+  '/reports',
+  '/reports/daily'
 ];
 
 // Auth related paths that should be excluded from session checks
