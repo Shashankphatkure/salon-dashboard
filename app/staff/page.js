@@ -24,13 +24,13 @@ export default function StaffPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  // Generate time slots from 9am to 10:30pm with 30-minute intervals
+  // Generate time slots from 9am to 11:30pm with 15-minute intervals
   useEffect(() => {
     const slots = [];
-    for (let hour = 9; hour <= 22; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        // Skip slots after 10:30 PM
-        if (hour > 22 || (hour === 22 && minute > 30)) continue;
+    for (let hour = 9; hour <= 23; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        // Skip slots after 11:30 PM
+        if (hour > 23 || (hour === 23 && minute > 30)) continue;
         
         const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
         slots.push({
@@ -103,11 +103,11 @@ export default function StaffPage() {
           const startTotalMinutes = startHour * 60 + startMinute;
           const endTotalMinutes = endHour * 60 + endMinute;
           
-          // Mark all 30-minute slots that fall within this availability window
-          for (let hour = 9; hour <= 22; hour++) {
-            for (let minute = 0; minute < 60; minute += 30) {
-              // Skip slots after 10:30 PM
-              if (hour > 22 || (hour === 22 && minute > 30)) continue;
+          // Mark all 15-minute slots that fall within this availability window
+          for (let hour = 9; hour <= 23; hour++) {
+            for (let minute = 0; minute < 60; minute += 15) {
+              // Skip slots after 11:30 PM
+              if (hour > 23 || (hour === 23 && minute > 30)) continue;
               
               const slotTotalMinutes = hour * 60 + minute;
               if (slotTotalMinutes >= startTotalMinutes && slotTotalMinutes < endTotalMinutes) {
@@ -224,8 +224,16 @@ export default function StaffPage() {
       // Group consecutive slots with the same availability
       sortedSlots.forEach(slot => {
         const [hour, minute] = slot.time.split(':').map(num => parseInt(num, 10));
-        const endHour = minute === 30 ? hour + 1 : hour;
-        const endMinute = minute === 30 ? '00' : '30';
+        // Calculate end time based on 15-minute intervals
+        let endHour = hour;
+        let endMinute = minute + 15;
+        
+        if (endMinute >= 60) {
+          endHour += 1;
+          endMinute = 0;
+        }
+        
+        const endTimeString = `${endHour}:${endMinute === 0 ? '00' : endMinute}`;
         
         if (!currentGroup || currentGroup.available !== slot.available) {
           // Start a new group
@@ -235,12 +243,12 @@ export default function StaffPage() {
           
           currentGroup = {
             start: slot.time,
-            end: `${endHour}:${endMinute}`,
+            end: endTimeString,
             available: slot.available
           };
         } else {
           // Extend the current group
-          currentGroup.end = `${endHour}:${endMinute}`;
+          currentGroup.end = endTimeString;
         }
       });
       

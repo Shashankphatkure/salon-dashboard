@@ -134,13 +134,13 @@ export default function BookingStaffAvailability({
     return `${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''} remaining`;
   };
 
-  // Generate 30-minute time slots for the day (9 AM to 8 PM)
+  // Generate 15-minute time slots for the day (9 AM to 11:30 PM)
   const getAllTimeSlots = () => {
     const slots = [];
-    for (let hour = 9; hour <= 20; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        // Skip 8:30 PM
-        if (hour === 20 && minute === 30) continue;
+    for (let hour = 9; hour <= 23; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        // Skip slots after 11:30 PM
+        if (hour === 23 && minute > 30) continue;
         slots.push(`${hour}:${minute === 0 ? '00' : minute}`);
       }
     }
@@ -251,7 +251,7 @@ export default function BookingStaffAvailability({
                     const currentTotalMinutes = currentHour * 60 + (currentMinute || 0);
                     const nextTotalMinutes = nextHour * 60 + (nextMinute || 0);
                     
-                    if (nextTotalMinutes - currentTotalMinutes !== 30) {
+                    if (nextTotalMinutes - currentTotalMinutes !== 15) {
                       break;
                     }
                     
@@ -499,7 +499,7 @@ export default function BookingStaffAvailability({
                                             const currentTotalMinutes = currentHour * 60 + (currentMinute || 0);
                                             const nextTotalMinutes = nextHour * 60 + (nextMinute || 0);
                                             
-                                            if (nextTotalMinutes - currentTotalMinutes !== 30) {
+                                            if (nextTotalMinutes - currentTotalMinutes !== 15) {
                                               break;
                                             }
                                             
