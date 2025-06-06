@@ -480,16 +480,16 @@ export default function BookAppointment() {
       appointment.staff_id === selectedStaff.id
     );
     
-    // If no staff slots found, provide default time slots (9am-11:30pm)
+    // If no staff slots found, provide default time slots (9am-10:30pm)
     if (staffSlots.length === 0) {
       console.log('No staff availability records found, using default schedule');
       
-      // Return all possible 15-minute slots from 9am to 11:30pm as default
+      // Return all possible 30-minute slots from 9am to 10:30pm as default
       const defaultTimeSlots = [];
-      for (let hour = 9; hour <= 23; hour++) {
-        for (let minute = 0; minute < 60; minute += 15) {
-          // Skip slots after 11:30 PM
-          if (hour > 23 || (hour === 23 && minute > 30)) continue;
+      for (let hour = 9; hour <= 22; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          // Skip slots after 10:30 PM
+          if (hour > 22 || (hour === 22 && minute > 30)) continue;
           
           // Skip past time slots if it's today
           if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
@@ -514,11 +514,11 @@ export default function BookAppointment() {
     
     const timeSlots = [];
     
-    // Generate time slots from 9am to 11:30pm in 15-minute intervals
-    for (let hour = 9; hour <= 23; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        // Skip slots after 11:30 PM
-        if (hour > 23 || (hour === 23 && minute > 30)) continue;
+    // Generate time slots from 9am to 10:30pm in 30-minute intervals
+    for (let hour = 9; hour <= 22; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Skip slots after 10:30 PM
+        if (hour > 22 || (hour === 22 && minute > 30)) continue;
         
         // Skip past time slots if it's today
         if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
@@ -598,7 +598,7 @@ export default function BookAppointment() {
     const startTotalMinutes = (startHour * 60) + (startMinute || 0);
     
     // Calculate end time in minutes
-    const endTotalMinutes = startTotalMinutes + (durationSlots * 15);
+    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
     
     // Check for conflicts with booked appointments
     // First check if any of the required slots are already booked
@@ -609,7 +609,7 @@ export default function BookAppointment() {
       if (slot.booked) return false;
     }
     
-    // Check that each following slot is 15 minutes apart from the previous one
+    // Check that each following slot is 30 minutes apart from the previous one
     for (let i = 1; i < durationSlots; i++) {
       const currentSlot = availableSlots[startIndex + i];
       const previousSlot = availableSlots[startIndex + i - 1];
@@ -622,8 +622,8 @@ export default function BookAppointment() {
       const currentTotalMinutes = (currentHour * 60) + (currentMinute || 0);
       const prevTotalMinutes = (prevHour * 60) + (prevMinute || 0);
       
-      // Check if this slot is exactly 15 minutes after the previous one
-      if (currentTotalMinutes !== prevTotalMinutes + 15) {
+      // Check if this slot is exactly 30 minutes after the previous one
+      if (currentTotalMinutes !== prevTotalMinutes + 30) {
         return false;
       }
     }
@@ -639,8 +639,8 @@ export default function BookAppointment() {
     const [hour, minute] = timeString.split(':').map(num => parseInt(num, 10));
     const slotTimeInMinutes = hour * 60 + (minute || 0);
     
-    // Duration of this slot - assuming 15 minutes
-    const slotEndTimeInMinutes = slotTimeInMinutes + 15;
+    // Duration of this slot - assuming 30 minutes
+    const slotEndTimeInMinutes = slotTimeInMinutes + 30;
     
     // Check against all booked slots for this staff
     return bookedSlots.some(appointment => {
@@ -848,7 +848,7 @@ export default function BookAppointment() {
 
   // Calculate total duration based on selected time slots
   const calculateSessionDuration = (numSlots) => {
-    return numSlots * 15; // Each slot is 15 minutes
+    return numSlots * 30; // Each slot is 30 minutes
   };
 
   // Get end time based on start time and duration slots
@@ -857,7 +857,7 @@ export default function BookAppointment() {
     
     const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num, 10));
     const startTotalMinutes = (startHour * 60) + (startMinute || 0);
-    const endTotalMinutes = startTotalMinutes + (durationSlots * 15);
+    const endTotalMinutes = startTotalMinutes + (durationSlots * 30);
     
     const endHour = Math.floor(endTotalMinutes / 60);
     const endMinute = endTotalMinutes % 60;
@@ -867,7 +867,7 @@ export default function BookAppointment() {
 
   // Format duration for display
   const formatDuration = (slots) => {
-    const minutes = slots * 15;
+    const minutes = slots * 30;
     if (minutes < 60) {
       return `${minutes} minutes`;
     }
@@ -890,7 +890,7 @@ export default function BookAppointment() {
     const totalMinutes1 = hour1 * 60 + (minute1 || 0);
     const totalMinutes2 = hour2 * 60 + (minute2 || 0);
     
-    return totalMinutes2 - totalMinutes1 === 15;
+    return totalMinutes2 - totalMinutes1 === 30;
   };
 
   return (
