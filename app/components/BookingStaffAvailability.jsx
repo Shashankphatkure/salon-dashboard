@@ -134,13 +134,13 @@ export default function BookingStaffAvailability({
     return `${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''} remaining`;
   };
 
-  // Generate 30-minute time slots for the day (9 AM to 8 PM)
+  // Generate 30-minute time slots for the day (9 AM to 11:30 PM)
   const getAllTimeSlots = () => {
     const slots = [];
-    for (let hour = 9; hour <= 20; hour++) {
+    for (let hour = 9; hour <= 23; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        // Skip 8:30 PM
-        if (hour === 20 && minute === 30) continue;
+        // Skip slots after 11:30 PM
+        if (hour > 23 || (hour === 23 && minute > 30)) continue;
         slots.push(`${hour}:${minute === 0 ? '00' : minute}`);
       }
     }

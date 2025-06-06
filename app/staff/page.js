@@ -24,13 +24,13 @@ export default function StaffPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  // Generate time slots from 9am to 10:30pm with 30-minute intervals
+  // Generate time slots from 9am to 11:30pm with 30-minute intervals
   useEffect(() => {
     const slots = [];
-    for (let hour = 9; hour <= 22; hour++) {
+    for (let hour = 9; hour <= 23; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        // Skip slots after 10:30 PM
-        if (hour > 22 || (hour === 22 && minute > 30)) continue;
+        // Skip slots after 11:30 PM
+        if (hour > 23 || (hour === 23 && minute > 30)) continue;
         
         const timeString = `${hour}:${minute === 0 ? '00' : minute}`;
         slots.push({
@@ -104,10 +104,10 @@ export default function StaffPage() {
           const endTotalMinutes = endHour * 60 + endMinute;
           
           // Mark all 30-minute slots that fall within this availability window
-          for (let hour = 9; hour <= 22; hour++) {
+          for (let hour = 9; hour <= 23; hour++) {
             for (let minute = 0; minute < 60; minute += 30) {
-              // Skip slots after 10:30 PM
-              if (hour > 22 || (hour === 22 && minute > 30)) continue;
+              // Skip slots after 11:30 PM
+              if (hour > 23 || (hour === 23 && minute > 30)) continue;
               
               const slotTotalMinutes = hour * 60 + minute;
               if (slotTotalMinutes >= startTotalMinutes && slotTotalMinutes < endTotalMinutes) {
