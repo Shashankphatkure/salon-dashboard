@@ -49,32 +49,36 @@ export default function NotificationsPage() {
     return `${diffDays} days`;
   };
 
-  const NotificationCard = ({ customer, type }) => (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white">
-            {customer.name}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {customer.phone}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-            {formatDate(customer[type])} • {getDaysFromNow(customer[type])}
-          </p>
-        </div>
-        <div className="text-right">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            type === 'birthdate' 
-              ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
-              : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-          }`}>
-            {type === 'birthdate' ? '🎂 Birthday' : '💝 Anniversary'}
-          </span>
+  const NotificationCard = ({ customer, type }) => {
+    const eventDate = type === 'birthdate' ? customer.nextBirthday : customer.nextAnniversary;
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {customer.name}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {customer.phone}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              {formatDate(eventDate)} • {getDaysFromNow(eventDate)}
+            </p>
+          </div>
+          <div className="text-right">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              type === 'birthdate' 
+                ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
+                : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+            }`}>
+              {type === 'birthdate' ? '🎂 Birthday' : '💝 Anniversary'}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
