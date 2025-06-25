@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import UserMenu from './UserMenu';
+import { getUpcomingBirthdays, getUpcomingAnniversaries } from '@/lib/db';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
   
   // Menu items in the specified sequence
   const menuItems = [
@@ -15,13 +17,35 @@ export default function Navbar() {
     { href: '/services', label: 'Service' },
     { href: '/staff', label: 'Operator' },
     { href: '/customers', label: 'Customers' },
-    { href: '/notifications', label: 'Notifications' },
+    { href: '/notifications', label: 'Notifications', hasNotifications: true },
     { href: '/membership', label: 'Membership' },
     { href: '/credit', label: 'Credit' },
     { href: '/invoice', label: 'Invoices' },
     { href: '/products', label: 'Products' },
     { href: '/reports', label: 'Reports' }
   ];
+
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const [birthdays, anniversaries] = await Promise.all([
+          getUpcomingBirthdays(),
+          getUpcomingAnniversaries()
+        ]);
+        setNotificationCount(birthdays.length + anniversaries.length);
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+        setNotificationCount(0);
+      }
+    };
+
+    fetchNotificationCount();
+    
+    // Refresh count every 5 minutes
+    const interval = setInterval(fetchNotificationCount, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -40,11 +64,16 @@ export default function Navbar() {
           <Link 
             key={item.label} 
             href={item.href} 
-            className={`font-medium hover:text-purple-600 dark:hover:text-purple-300 transition ${
+            className={`font-medium hover:text-purple-600 dark:hover:text-purple-300 transition relative ${
               item.href === '/' ? 'text-purple-600 dark:text-purple-300' : ''
             }`}
           >
             {item.label}
+            {item.hasNotifications && notificationCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
@@ -79,9 +108,16 @@ export default function Navbar() {
                 key={item.label} 
                 href={item.href}
                 onClick={() => setIsMenuOpen(false)}
-                className="block py-2 px-2 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                className="block py-2 px-2 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition relative"
               >
-                {item.label}
+                <div className="flex items-center justify-between">
+                  <span>{item.label}</span>
+                  {item.hasNotifications && notificationCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold ml-2">
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </span>
+                  )}
+                </div>
               </Link>
             ))}
           </div>
