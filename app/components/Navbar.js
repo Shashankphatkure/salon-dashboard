@@ -17,6 +17,7 @@ export default function Navbar() {
     { href: '/services', label: 'Service' },
     { href: '/staff', label: 'Operator' },
     { href: '/customers', label: 'Customers' },
+    { href: '/client-history', label: 'Client History' },
     { href: '/notifications', label: 'Notifications', hasNotifications: true },
     { href: '/membership', label: 'Membership' },
     { href: '/credit', label: 'Credit' },

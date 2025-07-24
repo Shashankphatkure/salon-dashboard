@@ -8,7 +8,7 @@ const CustomersList = () => {
   const supabase = createClientComponentClient();
   // Customer state
   const [customers, setCustomers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // State for modal and form
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,11 +26,17 @@ const CustomersList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('joinDate');
   const [sortDirection, setSortDirection] = useState('desc');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Fetch customers from Supabase
+  // Fetch customers from Supabase with pagination
   const fetchCustomers = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       
       // Map frontend field names to database column names
       const columnMap = {
@@ -41,11 +47,22 @@ const CustomersList = () => {
       };
       
       const orderByColumn = columnMap[sortBy] || sortBy;
+      const offset = (currentPage - 1) * itemsPerPage;
       
+      // Get total count for pagination
+      const { count } = await supabase
+        .from('customers')
+        .select('id', { count: 'exact', head: true });
+      
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      
+      // Get paginated data
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .order(orderByColumn, { ascending: sortDirection === 'asc' });
+        .order(orderByColumn, { ascending: sortDirection === 'asc' })
+        .range(offset, offset + itemsPerPage - 1);
         
       if (error) throw error;
       
@@ -67,14 +84,19 @@ const CustomersList = () => {
       console.error('Error fetching customers:', error);
       alert('Error loading customers. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // Load customers on component mount and sort change
+  // Load customers on component mount, sort change, and page change
   useEffect(() => {
     fetchCustomers();
-  }, [sortBy, sortDirection]);
+  }, [sortBy, sortDirection, currentPage]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -216,13 +238,12 @@ const CustomersList = () => {
     }
   };
 
-  // Filter customers
-  const filteredCustomers = customers
-    .filter(customer => 
-      customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone?.includes(searchQuery) ||
-      customer.membershipType?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  // Apply search filter to current page data
+  const filteredCustomers = customers.filter(customer => 
+    customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    customer.phone?.includes(searchQuery) ||
+    customer.membershipType?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Render sort indicator
   const renderSortIcon = (field) => {
@@ -405,6 +426,84 @@ const CustomersList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6 rounded-b-xl">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
+                <span className="font-medium">{totalCount}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {/* Page numbers */}
+                {(() => {
+                  const pages = [];
+                  const startPage = Math.max(1, currentPage - 2);
+                  const endPage = Math.min(totalPages, startPage + 4);
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={`page-${i}`}
+                        onClick={() => setCurrentPage(i)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === i
+                            ? 'z-10 bg-purple-50 border-purple-500 text-purple-600 dark:bg-purple-900 dark:border-purple-400 dark:text-purple-200'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  return pages;
+                })()}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Customer Modal */}
       {isModalOpen && (
