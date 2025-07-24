@@ -210,8 +210,11 @@ export default function DailyReport() {
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</h3>
-              <p className="text-2xl font-bold text-gray-800 dark:text-white">₹{dailyStats.revenue.total.toLocaleString()}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Cash Revenue</h3>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">₹{dailyStats.revenue.cash.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Total: ₹{dailyStats.revenue.total.toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
@@ -328,8 +331,12 @@ export default function DailyReport() {
               <span className="font-medium text-gray-800 dark:text-white">₹{dailyStats.revenue.credit.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-700">
-              <span className="text-purple-600 dark:text-purple-400 font-medium">Total Revenue</span>
+              <span className="text-purple-600 dark:text-purple-400 font-medium">Total Invoice Amount</span>
               <span className="font-bold text-purple-800 dark:text-purple-300">₹{dailyStats.revenue.total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
+              <span className="text-green-600 dark:text-green-400 font-medium">Net Cash Revenue</span>
+              <span className="font-bold text-green-800 dark:text-green-300">₹{(dailyStats.revenue.finalRevenue || dailyStats.revenue.cash).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <span className="text-gray-600 dark:text-gray-400">Average Service Value</span>
@@ -441,6 +448,11 @@ export default function DailyReport() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       ₹{appointment.total_amount?.toLocaleString() || '0'}
+                      {appointment.status === 'completed' && (
+                        <div className="text-xs text-green-600 dark:text-green-400">
+                          Invoice Generated
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
