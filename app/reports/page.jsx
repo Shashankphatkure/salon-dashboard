@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth';
 import Navbar from '../components/Navbar';
 import DailyReport from '../components/DailyReport';
 import { getAppointments, getMembershipPlans, getCustomers } from '../../lib/db';
+import ExportButtons from '../components/ExportButtons';
 
 export default function Reports() {
   const router = useRouter();
@@ -134,6 +135,25 @@ export default function Reports() {
       return acc;
     }, { gold: 0, silverPlus: 0, silver: 0, nonMembership: 0 });
     
+    // Get all-time membership counts for export purposes
+    const allTimeMembershipCounts = customers.reduce((acc, customer) => {
+      const membershipType = customer.membership_type;
+      
+      if (membershipType && membershipType !== 'None') {
+        // Normalize membership type names
+        if (membershipType.includes('Gold')) {
+          acc.gold += 1;
+        } else if (membershipType.includes('Silver Plus')) {
+          acc.silverPlus += 1;
+        } else if (membershipType.includes('Silver') && !membershipType.includes('Plus')) {
+          acc.silver += 1;
+        } else if (membershipType.includes('Non-Membership')) {
+          acc.nonMembership += 1;
+        }
+      }
+      return acc;
+    }, { gold: 0, silverPlus: 0, silver: 0, nonMembership: 0 });
+    
     // For "Total Members", show members who joined within the selected period
     const membersInPeriod = filteredCustomers.filter(customer => 
       customer.membership_type && customer.membership_type !== 'None'
@@ -162,11 +182,18 @@ export default function Reports() {
       newCustomersThisMonth, // Always show this month for consistency
       newCustomersInPeriod, // New customers in selected period
       membersByPlan: {
-        // Show membership distribution for the selected period
+        // Show membership distribution for the selected period - for dashboard display
         gold: membershipCounts.gold,
         silverPlus: membershipCounts.silverPlus,
         silver: membershipCounts.silver,
         nonMembership: membershipCounts.nonMembership
+      },
+      allTimeMembersByPlan: {
+        // Show all-time membership distribution - for exports
+        gold: allTimeMembershipCounts.gold,
+        silverPlus: allTimeMembershipCounts.silverPlus,
+        silver: allTimeMembershipCounts.silver,
+        nonMembership: allTimeMembershipCounts.nonMembership
       },
       retentionRate: 92 // This could be calculated from actual data if needed
     };
@@ -439,14 +466,12 @@ export default function Reports() {
               Generate Report
             </button>
           </div>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300 text-sm">
-              Export PDF
-            </button>
-            <button className="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300 text-sm">
-              Export CSV
-            </button>
-          </div>
+          <ExportButtons 
+            reportData={{ membershipStats, revenueStats, topServices }}
+            dateRange={dateRange}
+            startDate={getDateRangeFromSelection(dateRange).startDate}
+            endDate={getDateRangeFromSelection(dateRange).endDate}
+          />
         </div>
 
         {/* Summary Cards */}
