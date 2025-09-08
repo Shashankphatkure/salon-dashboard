@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import Navbar from '../components/Navbar';
 import DailyReport from '../components/DailyReport';
-import { getAppointments, getMembershipPlans } from '../../lib/db';
+import { getAppointments, getMembershipPlans, getCustomers } from '../../lib/db';
 
 export default function Reports() {
   const router = useRouter();
@@ -53,16 +53,17 @@ export default function Reports() {
       
       // Fetch appointments data using the available function
       const appointmentsData = await getAppointments({
-        date_from: startDate,
-        date_to: endDate
+        dateFrom: startDate,
+        dateTo: endDate
       });
       
       // Fetch membership data
       const membershipPlans = await getMembershipPlans();
+      const customersData = await getCustomers();
       
       // Transform data for UI
-      const membershipData = processMembershipData(membershipPlans);
-      const revenueData = processRevenueData(appointmentsData);
+      const membershipData = processMembershipData(membershipPlans, customersData, startDate, endDate);
+      const revenueData = processRevenueData(appointmentsData, startDate, endDate);
       const services = processTopServices(appointmentsData);
       
       // Update state
@@ -105,29 +106,79 @@ export default function Reports() {
     return { startDate, endDate };
   };
 
-  const processMembershipData = (plans) => {
-    // Count members by plan type
-    const goldCount = plans.find(p => p.tier === 'Gold')?.active_count || 0;
-    const silverPlusCount = plans.find(p => p.tier === 'Silver Plus')?.active_count || 0;
-    const silverCount = plans.find(p => p.tier === 'Silver')?.active_count || 0;
+  const processMembershipData = (plans, customers, startDate, endDate) => {
+    // Filter customers by the selected date range (customers created within the period)
+    const filteredCustomers = customers.filter(customer => {
+      const createdAt = new Date(customer.created_at);
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      return createdAt >= filterStart && createdAt <= filterEnd;
+    });
     
-    const totalMembers = goldCount + silverPlusCount + silverCount;
+    // Count actual customers by membership type (from filtered customers)
+    const membershipCounts = filteredCustomers.reduce((acc, customer) => {
+      const membershipType = customer.membership_type;
+      
+      if (membershipType && membershipType !== 'None') {
+        // Normalize membership type names
+        if (membershipType.includes('Gold')) {
+          acc.gold += 1;
+        } else if (membershipType.includes('Silver Plus')) {
+          acc.silverPlus += 1;
+        } else if (membershipType.includes('Silver') && !membershipType.includes('Plus')) {
+          acc.silver += 1;
+        } else if (membershipType.includes('Non-Membership')) {
+          acc.nonMembership += 1;
+        }
+      }
+      return acc;
+    }, { gold: 0, silverPlus: 0, silver: 0, nonMembership: 0 });
+    
+    // For "Total Members", show members who joined within the selected period
+    const membersInPeriod = filteredCustomers.filter(customer => 
+      customer.membership_type && customer.membership_type !== 'None'
+    ).length;
+    
+    // Also get lifetime total for reference
+    const allTimeMembersCount = customers.filter(customer => 
+      customer.membership_type && customer.membership_type !== 'None'
+    ).length;
+    
+    // Calculate new customers within the selected date range
+    const newCustomersInPeriod = filteredCustomers.length;
+    
+    // Calculate new customers this month (for display purposes)
+    const currentDate = new Date();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const newCustomersThisMonth = customers.filter(customer => {
+      const createdAt = new Date(customer.created_at);
+      return createdAt >= firstDayOfMonth;
+    }).length;
     
     return {
-      totalMembers,
-      activeMembers: totalMembers, // Assuming all counted members are active
-      newMembersThisMonth: plans.reduce((sum, plan) => sum + (plan.new_members_this_month || 0), 0),
+      totalMembers: membersInPeriod, // Members who joined in selected period
+      allTimeMembers: allTimeMembersCount, // All-time total for reference
+      activeMembers: membersInPeriod, // Members in selected period are considered active
+      newCustomersThisMonth, // Always show this month for consistency
+      newCustomersInPeriod, // New customers in selected period
       membersByPlan: {
-        gold: goldCount,
-        silverPlus: silverPlusCount,
-        silver: silverCount
+        // Show membership distribution for the selected period
+        gold: membershipCounts.gold,
+        silverPlus: membershipCounts.silverPlus,
+        silver: membershipCounts.silver,
+        nonMembership: membershipCounts.nonMembership
       },
-      retentionRate: 92 // This might need to be calculated from actual data
+      retentionRate: 92 // This could be calculated from actual data if needed
     };
   };
 
-  const processRevenueData = (appointmentsData) => {
-    // Calculate current month's revenue
+  const processRevenueData = (appointmentsData, startDate, endDate) => {
+    // Only include completed appointments for revenue calculation
+    const completedAppointments = appointmentsData.filter(appointment => 
+      appointment.status === 'completed'
+    );
+    
+    // Calculate current month's revenue (always September 2025 for comparison)
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
@@ -135,51 +186,51 @@ export default function Reports() {
     const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     
-    // Filter appointments for current and previous month
-    const currentMonthAppointments = appointmentsData.filter(appointment => {
+    // Filter completed appointments for current and previous month (for growth calculation)
+    const currentMonthAppointments = completedAppointments.filter(appointment => {
       const appointmentDate = new Date(appointment.date);
       return appointmentDate.getMonth() === currentMonth && 
              appointmentDate.getFullYear() === currentYear;
     });
     
-    const previousMonthAppointments = appointmentsData.filter(appointment => {
+    const previousMonthAppointments = completedAppointments.filter(appointment => {
       const appointmentDate = new Date(appointment.date);
       return appointmentDate.getMonth() === previousMonth && 
              appointmentDate.getFullYear() === previousYear;
     });
     
-    // Calculate revenue
+    // Calculate revenue from completed appointments
     const currentMonthRevenue = currentMonthAppointments.reduce(
-      (sum, appointment) => sum + (appointment.total_amount || 0), 0
+      (sum, appointment) => sum + (parseFloat(appointment.total_amount) || 0), 0
     );
     
     const previousMonthRevenue = previousMonthAppointments.reduce(
-      (sum, appointment) => sum + (appointment.total_amount || 0), 0
+      (sum, appointment) => sum + (parseFloat(appointment.total_amount) || 0), 0
     );
     
     // Calculate growth percentage
     const growth = previousMonthRevenue > 0 
       ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 
-      : 0;
+      : currentMonthRevenue > 0 ? 100 : 0;
     
-    // For points, since we don't have that data directly, estimate based on revenue
-    const totalPointsIssued = Math.round(
-      appointmentsData.reduce((sum, appointment) => sum + (appointment.total_amount || 0), 0) * 0.5
+    // Calculate total revenue for the selected period (this is the main change)
+    const totalRevenue = completedAppointments.reduce(
+      (sum, appointment) => sum + (parseFloat(appointment.total_amount) || 0), 0
     );
     
+    // Estimate points based on revenue (assuming 1 rupee = 1 point for services)
+    const totalPointsIssued = Math.round(totalRevenue);
     const totalPointsRedeemed = Math.round(totalPointsIssued * 0.75); // Estimate 75% redemption
     
     return {
-      thisMonth: currentMonthRevenue,
-      lastMonth: previousMonthRevenue,
-      growth: parseFloat(growth.toFixed(1)),
-      totalPointsIssued,
-      totalPointsRedeemed,
-      averageServiceValue: appointmentsData.length > 0 
-        ? Math.round(
-            appointmentsData.reduce((sum, appointment) => sum + (appointment.total_amount || 0), 0) / 
-            appointmentsData.length
-          )
+      thisMonth: Math.round(currentMonthRevenue), // Always current month for comparison
+      lastMonth: Math.round(previousMonthRevenue), // Always previous month for comparison
+      growth: parseFloat(growth.toFixed(1)), // Growth is always month-over-month
+      totalRevenue: Math.round(totalRevenue), // Revenue for selected period
+      totalPointsIssued, // Based on selected period
+      totalPointsRedeemed, // Based on selected period
+      averageServiceValue: completedAppointments.length > 0 
+        ? Math.round(totalRevenue / completedAppointments.length)
         : 0
     };
   };
@@ -401,22 +452,22 @@ export default function Reports() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Members</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Members in Period</h3>
             <p className="text-3xl font-bold text-gray-800 dark:text-white">{membershipStats.totalMembers}</p>
             <div className="mt-2 flex items-center text-sm">
-              <span className="text-green-500 font-medium">+{membershipStats.newMembersThisMonth} new</span>
-              <span className="text-gray-500 dark:text-gray-400 ml-2">this month</span>
+              <span className="text-green-500 font-medium">+{membershipStats.newCustomersInPeriod} customers</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-2">| All-time: {membershipStats.allTimeMembers} members</span>
             </div>
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Monthly Revenue</h3>
-            <p className="text-3xl font-bold text-gray-800 dark:text-white">₹{revenueStats.thisMonth.toLocaleString()}</p>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Period Revenue</h3>
+            <p className="text-3xl font-bold text-gray-800 dark:text-white">₹{revenueStats.totalRevenue.toLocaleString()}</p>
             <div className="mt-2 flex items-center text-sm">
-              <span className={`font-medium ${revenueStats.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {revenueStats.growth >= 0 ? '+' : ''}{revenueStats.growth}%
+              <span className="text-blue-500 font-medium">Current Month: ₹{revenueStats.thisMonth.toLocaleString()}</span>
+              <span className={`font-medium ml-2 ${revenueStats.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                ({revenueStats.growth >= 0 ? '+' : ''}{revenueStats.growth}%)
               </span>
-              <span className="text-gray-500 dark:text-gray-400 ml-2">vs last month</span>
             </div>
           </div>
           
@@ -447,44 +498,78 @@ export default function Reports() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Membership Distribution</h3>
-            <div className="flex items-center justify-center h-64">
-              <div className="flex w-full max-w-md">
-                {/* Gold */}
-                <div className="relative w-full" style={{ width: `${(membershipStats.membersByPlan.gold / membershipStats.totalMembers) * 100}%` }}>
-                  <div className="h-8 bg-amber-500 rounded-l-full"></div>
-                  <div className="mt-2 text-center">
-                    <p className="font-medium text-gray-700 dark:text-gray-300">Gold</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{membershipStats.membersByPlan.gold} members</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {Math.round((membershipStats.membersByPlan.gold / membershipStats.totalMembers) * 100) || 0}%
-                    </p>
-                  </div>
+            <div className="space-y-4">
+              {membershipStats.totalMembers > 0 ? (
+                <>
+                  {/* Gold */}
+                  {membershipStats.membersByPlan.gold > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-amber-500 rounded mr-3"></div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Gold</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipStats.membersByPlan.gold}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                          ({Math.round((membershipStats.membersByPlan.gold / membershipStats.totalMembers) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Silver Plus */}
+                  {membershipStats.membersByPlan.silverPlus > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-purple-500 rounded mr-3"></div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Silver Plus</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipStats.membersByPlan.silverPlus}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                          ({Math.round((membershipStats.membersByPlan.silverPlus / membershipStats.totalMembers) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Silver */}
+                  {membershipStats.membersByPlan.silver > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-gray-500 rounded mr-3"></div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Silver</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipStats.membersByPlan.silver}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                          ({Math.round((membershipStats.membersByPlan.silver / membershipStats.totalMembers) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Non-Membership */}
+                  {membershipStats.membersByPlan.nonMembership > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Non-Membership Plans</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipStats.membersByPlan.nonMembership}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                          ({Math.round((membershipStats.membersByPlan.nonMembership / membershipStats.totalMembers) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No membership data available
                 </div>
-                
-                {/* Silver Plus */}
-                <div className="relative w-full" style={{ width: `${(membershipStats.membersByPlan.silverPlus / membershipStats.totalMembers) * 100}%` }}>
-                  <div className="h-8 bg-purple-500"></div>
-                  <div className="mt-2 text-center">
-                    <p className="font-medium text-gray-700 dark:text-gray-300">Silver Plus</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{membershipStats.membersByPlan.silverPlus} members</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {Math.round((membershipStats.membersByPlan.silverPlus / membershipStats.totalMembers) * 100) || 0}%
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Silver */}
-                <div className="relative w-full" style={{ width: `${(membershipStats.membersByPlan.silver / membershipStats.totalMembers) * 100}%` }}>
-                  <div className="h-8 bg-gray-500 rounded-r-full"></div>
-                  <div className="mt-2 text-center">
-                    <p className="font-medium text-gray-700 dark:text-gray-300">Silver</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{membershipStats.membersByPlan.silver} members</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {Math.round((membershipStats.membersByPlan.silver / membershipStats.totalMembers) * 100) || 0}%
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
