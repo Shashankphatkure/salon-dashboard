@@ -14,7 +14,8 @@ import {
   getUserMembership,
   getMembershipPlans,
   getFilteredAppointments,
-  updateAppointment 
+  updateAppointment,
+  getAppointmentCounts
 } from '../../lib/db';
 
 export default function Dashboard() {
@@ -70,13 +71,12 @@ export default function Dashboard() {
         
         setAppointments(appointmentsData);
         
-        // Get all appointments for stats
-        const allAppointments = await getAppointments();
-        const pendingAppointments = allAppointments.filter(appt => appt.status === 'pending');
+        // Get appointment counts efficiently
+        const appointmentCounts = await getAppointmentCounts();
         
         setAppointmentStats({
-          total: allAppointments.length,
-          pending: pendingAppointments.length
+          total: appointmentCounts.total,
+          pending: appointmentCounts.pending
         });
         
         // Fetch membership stats
