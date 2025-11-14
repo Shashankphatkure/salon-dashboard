@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import { useAuth } from '../../lib/auth';
 import { getStaff, getStaffAvailability, updateStaffAvailability, deleteStaff } from '../../lib/db';
 
@@ -306,20 +306,17 @@ export default function StaffPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Operator">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading staff data...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="Operator">
       <main className="container mx-auto py-10 px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Operator Management</h1>
@@ -593,6 +590,6 @@ export default function StaffPage() {
           </div>
         )}
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

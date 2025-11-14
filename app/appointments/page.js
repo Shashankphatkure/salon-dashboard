@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import { useAuth } from '../../lib/auth';
 import { getAppointments, deleteAppointment } from '../../lib/db';
 
@@ -97,20 +97,18 @@ export default function AppointmentsPage() {
   
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Appointments">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading appointments...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
-  
+
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Appointments">
         <div className="container mx-auto py-20 text-center">
           <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md max-w-xl mx-auto">
             <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h2>
@@ -123,10 +121,10 @@ export default function AppointmentsPage() {
             </button>
           </div>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
-  
+
   // Get status badge color
   const getStatusBadge = (status) => {
     const statusColors = {
@@ -135,14 +133,12 @@ export default function AppointmentsPage() {
       completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
     };
-    
+
     return statusColors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   };
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="Appointments">
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -272,6 +268,6 @@ export default function AppointmentsPage() {
           )}
         </div>
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

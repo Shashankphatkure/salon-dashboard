@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import CSVImportExport from './CSVImportExport';
 
 const CustomersList = () => {
   const supabase = createClientComponentClient();
@@ -215,18 +216,98 @@ const CustomersList = () => {
           .from('customers')
           .delete()
           .eq('id', id);
-          
+
         if (error) throw error;
-        
+
         // Refresh customer list
         fetchCustomers();
-        
+
       } catch (error) {
         console.error('Error deleting customer:', error);
         alert('Error deleting customer. Please try again.');
       }
     }
   };
+
+  // Handle CSV import
+  const handleImportCustomers = async (importedData) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Transform imported data to match database schema
+      const customersToInsert = importedData.map(row => ({
+        name: row.name || '',
+        phone: row.phone || '',
+        birthdate: row.birthdate || null,
+        gender: row.gender || '',
+        address: row.address || '',
+        anniversary: row.anniversary || null,
+        membership_type: row.membershipType || 'None',
+        join_date: row.joinDate || today,
+        last_visit: today,
+        total_spent: parseFloat(row.totalSpent) || 0,
+        visits: parseInt(row.visits) || 0
+      }));
+
+      // Insert customers in batches
+      const { data, error } = await supabase
+        .from('customers')
+        .insert(customersToInsert)
+        .select();
+
+      if (error) throw error;
+
+      // Refresh customer list
+      await fetchCustomers();
+
+      return true;
+    } catch (error) {
+      console.error('Error importing customers:', error);
+      throw new Error('Failed to import customers: ' + error.message);
+    }
+  };
+
+  // CSV column definitions
+  const csvColumns = [
+    { key: 'name', label: 'Name' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'birthdate', label: 'Birth Date' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'address', label: 'Address' },
+    { key: 'anniversary', label: 'Anniversary' },
+    { key: 'membershipType', label: 'Membership Type' },
+    { key: 'joinDate', label: 'Join Date' },
+    { key: 'totalSpent', label: 'Total Spent' },
+    { key: 'visits', label: 'Visits' }
+  ];
+
+  // Sample data for CSV template
+  const sampleCustomerData = [
+    {
+      name: 'John Doe',
+      phone: '9876543210',
+      birthdate: '1990-01-15',
+      gender: 'Male',
+      address: '123 Main St, City',
+      anniversary: '2015-06-20',
+      membershipType: 'Gold',
+      joinDate: '2024-01-01',
+      totalSpent: '15000',
+      visits: '12'
+    },
+    {
+      name: 'Jane Smith',
+      phone: '9876543211',
+      birthdate: '1985-05-22',
+      gender: 'Female',
+      address: '456 Oak Ave, Town',
+      anniversary: '',
+      membershipType: 'Silver',
+      joinDate: '2024-02-15',
+      totalSpent: '8500',
+      visits: '8'
+    }
+  ];
 
   // Sort customers
   const handleSort = (field) => {
@@ -259,23 +340,23 @@ const CustomersList = () => {
       {/* Search and Add Customer */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="relative flex-1">
-          <input 
-            type="text" 
+          <input
+            type="text"
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
             placeholder="Search customers by name, phone, or membership..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <svg 
-            className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-500" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </div>
-        <button 
+        <button
           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 min-w-[150px]"
           onClick={openAddModal}
         >
@@ -284,6 +365,18 @@ const CustomersList = () => {
           </svg>
           Add Customer
         </button>
+      </div>
+
+      {/* CSV Import/Export */}
+      <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+        <CSVImportExport
+          data={customers}
+          columns={csvColumns}
+          onImport={handleImportCustomers}
+          filename="customers"
+          entityName="customers"
+          sampleData={sampleCustomerData}
+        />
       </div>
 
       {/* Customers Table */}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import PageTitle from '../components/PageTitle';
 import { useAuth } from '../../lib/auth';
 import { 
@@ -220,20 +220,17 @@ export default function Dashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Dashboard">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading dashboard...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="Dashboard">
       <main className="container mx-auto py-10 px-4">
         <PageTitle 
           title="Dashboard" 
@@ -435,9 +432,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        
-        
+
+
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

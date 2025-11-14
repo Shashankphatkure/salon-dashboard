@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
-import Navbar from '../../components/Navbar';
+import SalonLayout from '../../components/SalonLayout';
 import DailyReport from '../../components/DailyReport';
 
 export default function DailyReportPage() {
@@ -42,20 +42,21 @@ export default function DailyReportPage() {
   // Show loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="text-center">
+      <SalonLayout currentPage="Reports">
+        <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   // Show password modal
   if (showPasswordModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8 w-full max-w-md">
+      <SalonLayout currentPage="Reports">
+        <div className="container mx-auto py-20 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8 w-full max-w-md">
           <div className="text-center mb-6">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
               <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -105,8 +106,9 @@ export default function DailyReportPage() {
               </button>
             </div>
           </form>
+          </div>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
@@ -117,10 +119,8 @@ export default function DailyReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
-      <div className="container mx-auto py-10 px-4">
+    <SalonLayout currentPage="Reports">
+      <main className="container mx-auto py-10 px-4">
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Daily Report</h2>
           <p className="text-gray-600 dark:text-gray-300">
@@ -129,14 +129,7 @@ export default function DailyReportPage() {
         </div>
 
         <DailyReport />
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 mt-20 py-8 border-t">
-        <div className="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400 text-sm">
-          <p>© {new Date().getFullYear()} Hair & Care Unisex Salon. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+      </main>
+    </SalonLayout>
   );
 }

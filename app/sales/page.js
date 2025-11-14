@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import { useAuth } from '../../lib/auth';
 import { getProducts, getCustomers, createCustomer, createOrder } from '../../lib/db';
 
@@ -357,9 +357,7 @@ export default function SalesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="Sales">
       <main className="container mx-auto py-10 px-4">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">Create Sale</h1>
         
@@ -677,6 +675,6 @@ export default function SalesPage() {
           </form>
         )}
       </main>
-    </div>
+    </SalonLayout>
   );
 } 

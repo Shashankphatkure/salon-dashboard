@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import { getRepeatCustomers, getCustomerSpendingHistory } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 
@@ -130,20 +130,18 @@ export default function ClientHistoryPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Client History">
         <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading client history...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-        <Navbar />
+      <SalonLayout currentPage="Client History">
         <div className="container mx-auto py-20 text-center">
           <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md max-w-xl mx-auto">
             <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h2>
@@ -156,14 +154,12 @@ export default function ClientHistoryPage() {
             </button>
           </div>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
+    <SalonLayout currentPage="Client History">
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -532,6 +528,6 @@ export default function ClientHistoryPage() {
           </div>
         </div>
       )}
-    </div>
+    </SalonLayout>
   );
 }

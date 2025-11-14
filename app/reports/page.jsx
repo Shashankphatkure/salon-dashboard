@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
-import Navbar from '../components/Navbar';
+import SalonLayout from '../components/SalonLayout';
 import DailyReport from '../components/DailyReport';
 import { getAppointments, getMembershipPlans, getCustomers } from '../../lib/db';
 import ExportButtons from '../components/ExportButtons';
@@ -316,19 +316,20 @@ export default function Reports() {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="text-center">
+      <SalonLayout currentPage="Reports">
+        <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   if (showPasswordModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
+      <SalonLayout currentPage="Reports">
+        <div className="container mx-auto py-20 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
             Reports Access
           </h2>
@@ -373,8 +374,9 @@ export default function Reports() {
               </button>
             </div>
           </form>
+          </div>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
@@ -386,20 +388,18 @@ export default function Reports() {
 
   if (!membershipStats || !revenueStats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="text-center">
+      <SalonLayout currentPage="Reports">
+        <div className="container mx-auto py-20 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading report data...</p>
         </div>
-      </div>
+      </SalonLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
-      <Navbar />
-      
-      <div className="container mx-auto py-10 px-4">
+    <SalonLayout currentPage="Reports">
+      <main className="container mx-auto py-10 px-4">
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Salon Reports</h2>
           <p className="text-gray-600 dark:text-gray-300">
@@ -670,14 +670,7 @@ export default function Reports() {
         </div>
           </>
         )}
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 mt-20 py-8 border-t">
-        <div className="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400 text-sm">
-          <p>© {new Date().getFullYear()} Hair & Care Unisex Salon. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+      </main>
+    </SalonLayout>
   );
 } 
