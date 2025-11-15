@@ -79,7 +79,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b p-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <img src="/logo2.png" alt="Glam CRM Logo" className="h-10 w-10" />
+          <img src="/logo2.png" alt="Glam CRM Logo" className="h-10 w-auto" />
           <h2 className="text-lg font-bold text-purple-800 dark:text-purple-300">Glam CRM</h2>
         </Link>
       </SidebarHeader>
