@@ -55,7 +55,7 @@ export default function Navbar() {
   return (
     <header className="p-4 md:p-6 flex items-center justify-between border-b bg-white dark:bg-gray-800 shadow-sm relative z-20">
       <Link href="/dashboard" className="flex items-center gap-2">
-        <img src="/logo2.png" alt="Glam CRM Logo" className="h-12 w-auto" />
+        <img src="/logo2.png" alt="Glam CRM Logo" className="h-12 w-auto bg-white rounded" />
       </Link>
       
       {/* Desktop menu */}
