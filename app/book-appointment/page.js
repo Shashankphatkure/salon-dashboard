@@ -6,6 +6,14 @@ import BookingStaffAvailability from '../components/BookingStaffAvailability';
 import { useAuth } from '../../lib/auth';
 import { useRouter } from 'next/navigation';
 import { getServices, getStaff, getStaffAvailability, createAppointment, getCustomers, createCustomer, getBookedAppointments } from '../../lib/db';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Search, Calendar, User, Phone, CheckCircle2, AlertCircle, Plus, X } from 'lucide-react';
 
 export default function BookAppointment() {
   const { user } = useAuth();
@@ -895,82 +903,97 @@ export default function BookAppointment() {
 
   return (
     <SalonLayout currentPage="Book An Appointment">
-      <main className="container mx-auto py-10 px-4">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">Book an Appointment</h1>
-        
+      <main className="container mx-auto py-10 px-4 max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Book an Appointment</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Schedule your salon services with our professional staff</p>
+        </div>
+
         {loading && !success ? (
-          <div className="max-w-4xl mx-auto text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-300">Loading services and availability...</p>
+          <div className="flex flex-col justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading services and availability...</p>
           </div>
         ) : success ? (
-          <div className="max-w-xl mx-auto bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-6 rounded-lg">
-            <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Appointment Booked Successfully!</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Thank you for booking with Hair & Care Unisex Salon. Your appointment(s) have been confirmed.
-            </p>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setSuccess(false)} 
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader className="border-l-4 border-green-500 bg-green-50 dark:bg-green-900/30">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <CardTitle className="text-green-700 dark:text-green-400">Appointment Booked Successfully!</CardTitle>
+              </div>
+              <CardDescription className="text-gray-700 dark:text-gray-300">
+                Thank you for booking with Hair & Care Unisex Salon. Your appointment(s) have been confirmed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Button
+                onClick={() => setSuccess(false)}
+                className="w-full sm:w-auto"
               >
                 Book Another Appointment
-              </button>
-              
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <>
+            {/* Error Alert */}
+            {error && (
+              <Card className="mb-6 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* BLOCK 1: Booking Form */}
-            <div className="mb-12 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Book Your Appointment</h2>
-              
-              {error && (
-                <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-4">
-                  <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-                </div>
-              )}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Book Your Appointment</CardTitle>
+                <CardDescription>Fill in your details and select services</CardDescription>
+              </CardHeader>
+              <CardContent>
               
               <form onSubmit={handleSubmit}>
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Customer Information */}
-                  <div>
-                    <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Customer Information</h3>
-                    
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Customer Information
+                      </h3>
+                    </div>
+
                     {/* Customer Type Selection */}
-                    <div className="mb-4">
-                      <div className="flex items-center space-x-6">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="customerType"
-                            value="new"
-                            checked={!isExistingCustomer}
-                            onChange={handleCustomerTypeChange}
-                            className="h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500"
-                          />
-                          <span className="ml-2 text-gray-700 dark:text-gray-300">New Customer</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="customerType"
-                            value="existing"
-                            checked={isExistingCustomer}
-                            onChange={handleCustomerTypeChange}
-                            className="h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500"
-                          />
-                          <span className="ml-2 text-gray-700 dark:text-gray-300">Existing Customer</span>
-                        </label>
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Customer Type</Label>
+                      <RadioGroup
+                        value={isExistingCustomer ? "existing" : "new"}
+                        onValueChange={(value) => handleCustomerTypeChange({ target: { value } })}
+                        className="flex gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="new" id="new" />
+                          <Label htmlFor="new" className="font-normal cursor-pointer">New Customer</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="existing" id="existing" />
+                          <Label htmlFor="existing" className="font-normal cursor-pointer">Existing Customer</Label>
+                        </div>
+                      </RadioGroup>
                     </div>
                     
                     {isExistingCustomer ? (
                       <div className="space-y-4">
-                        <div className="relative">
-                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Search Customer</label>
+                        <div className="space-y-2">
+                          <Label htmlFor="customerSearch">Search Customer</Label>
                           <div className="relative">
-                            <input
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <Input
+                              id="customerSearch"
                               type="text"
                               value={customerSearchQuery}
                               onChange={(e) => {
@@ -978,18 +1001,9 @@ export default function BookAppointment() {
                                 setShowCustomerSearch(true);
                               }}
                               onClick={() => setShowCustomerSearch(true)}
-                              className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              className="pl-9"
                               placeholder="Search by name, phone or email"
                             />
-                            <svg
-                              className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
                           </div>
                           
                           {/* Customer search results dropdown */}
@@ -1018,225 +1032,272 @@ export default function BookAppointment() {
                         </div>
                         
                         {selectedCustomer && (
-                          <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
-                            <div className="font-medium text-gray-800 dark:text-white">{selectedCustomer.name}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {selectedCustomer.phone}
-                            </div>
-                            {selectedCustomer.membership_type && (
-                              <div className="mt-1">
-                                <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full">
-                                  {selectedCustomer.membership_type}
-                                </span>
+                          <Card className="bg-gray-50 dark:bg-gray-800/50">
+                            <CardContent className="pt-4">
+                              <div className="font-medium text-gray-900 dark:text-white">{selectedCustomer.name}</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                                <Phone className="h-3 w-3" />
+                                {selectedCustomer.phone}
                               </div>
-                            )}
-                          </div>
+                              {selectedCustomer.membership_type && (
+                                <div className="mt-2">
+                                  <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                                    {selectedCustomer.membership_type}
+                                  </Badge>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
                         )}
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                          <input 
-                            type="text" 
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            placeholder="Your full name"
-                            required
-                          />
+                        <div className="space-y-2">
+                          <Label htmlFor="customerName">Name *</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <Input
+                              id="customerName"
+                              type="text"
+                              value={customerName}
+                              onChange={(e) => setCustomerName(e.target.value)}
+                              className="pl-9"
+                              placeholder="Your full name"
+                              required
+                            />
+                          </div>
                         </div>
-                        
-                        <div>
-                          <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-                          <input 
-                            type="tel" 
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            placeholder="Your phone number"
-                            required
-                          />
+
+                        <div className="space-y-2">
+                          <Label htmlFor="customerPhone">Phone *</Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <Input
+                              id="customerPhone"
+                              type="tel"
+                              value={customerPhone}
+                              onChange={(e) => setCustomerPhone(e.target.value)}
+                              className="pl-9"
+                              placeholder="Your phone number"
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
                   
                   {/* Date and Service Selection */}
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                      <input 
-                        type="date" 
-                        value={selectedDate}
-                        min={new Date().toISOString().split('T')[0]}
-                        onChange={handleDateChange}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        required
-                      />
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Date & Services
+                      </h3>
                     </div>
-                    
-                    <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Select Services</h3>
-                    
-                    <div className="mb-3">
+
+                    <div className="space-y-2">
+                      <Label htmlFor="appointmentDate">Appointment Date *</Label>
                       <div className="relative">
-                        <input 
-                          type="text" 
+                        <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <Input
+                          id="appointmentDate"
+                          type="date"
+                          value={selectedDate}
+                          min={new Date().toISOString().split('T')[0]}
+                          onChange={handleDateChange}
+                          className="pl-9"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Services</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <Input
+                          type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="pl-9"
                           placeholder="Search services..."
                         />
-                        <svg 
-                          className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
                       </div>
                     </div>
                     
-                    <div className="space-y-3 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                    <div className="space-y-2 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
                       {filteredServices.length > 0 ? (
                         filteredServices.map(service => (
-                          <div 
+                          <div
                             key={service.id}
-                            className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                            className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                               selectedServices.some(s => s.id === service.id)
-                                ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700'
-                                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700'
+                                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                             }`}
                             onClick={() => toggleServiceSelection(service)}
                           >
-                            <input 
-                              type="checkbox"
+                            <Checkbox
+                              id={`service-${service.id}`}
                               checked={selectedServices.some(s => s.id === service.id)}
-                              onChange={() => {}}
-                              className="h-4 w-4 text-purple-600 rounded border-gray-300 dark:border-gray-700 focus:ring-purple-500"
+                              onCheckedChange={() => toggleServiceSelection(service)}
                             />
-                            <div className="ml-3 flex-1">
-                              <h4 className="font-medium text-gray-700 dark:text-gray-300">{service.name}</h4>
+                            <Label
+                              htmlFor={`service-${service.id}`}
+                              className="flex-1 cursor-pointer font-normal"
+                            >
                               <div className="flex justify-between items-center">
-                                
+                                <span className="font-medium text-gray-900 dark:text-white">{service.name}</span>
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                   ₹{parseFloat(service.price).toLocaleString()}
                                 </span>
                               </div>
-                            </div>
+                            </Label>
                           </div>
                         ))
                       ) : (
-                        <p className="text-center py-4 text-gray-500 dark:text-gray-400">No services found matching your search.</p>
+                        <p className="text-center py-8 text-gray-500 dark:text-gray-400">No services found matching your search.</p>
                       )}
                     </div>
                     
                     {selectedServices.length > 0 && (
-                      <div className="flex justify-end">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Selected Services: {selectedServices.length}</p>
-                          <p className="font-bold text-gray-800 dark:text-white">Total: ₹{appointmentTotal.toLocaleString()}</p>
-                        </div>
-                      </div>
+                      <Card className="bg-gray-50 dark:bg-gray-800/50">
+                        <CardContent className="pt-4">
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Selected Services: <span className="font-medium">{selectedServices.length}</span>
+                            </div>
+                            <div className="font-bold text-lg text-gray-900 dark:text-white">
+                              Total: ₹{appointmentTotal.toLocaleString()}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
-                    
+
                     {selectedServices.length > 0 && (
-                      <div className="mt-4">
-                        <button
-                          type="button"
-                          onClick={addToPending}
-                          className="px-4 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-lg text-sm"
-                        >
-                          + Add Another Service
-                        </button>
-                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={addToPending}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Another Service
+                      </Button>
                     )}
                   </div>
                 </div>
                 
                 {/* Pending Appointments */}
                 {pendingAppointments.length > 0 && (
-                  <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Pending Appointments</h3>
-                    <div className="space-y-4">
+                  <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Pending Appointments</h3>
+                    <div className="space-y-3">
                       {pendingAppointments.map((appointment, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-medium text-gray-700 dark:text-gray-300">
-                                {appointment.staff.name} - {formatTime(appointment.time)}
-                              </p>
-                              <div className="mt-1 space-y-1">
-                                {appointment.services.map(service => (
-                                  <p key={service.id} className="text-sm text-gray-600 dark:text-gray-400">
-                                    {service.name} - ₹{parseFloat(service.price).toLocaleString()}
-                                  </p>
-                                ))}
+                        <Card key={index} className="bg-gray-50 dark:bg-gray-800/50">
+                          <CardContent className="pt-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant="secondary">
+                                    {appointment.staff.name}
+                                  </Badge>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {formatTime(appointment.time)}
+                                  </span>
+                                </div>
+                                <div className="space-y-1">
+                                  {appointment.services.map(service => (
+                                    <div key={service.id} className="flex justify-between text-sm">
+                                      <span className="text-gray-700 dark:text-gray-300">{service.name}</span>
+                                      <span className="text-gray-600 dark:text-gray-400">
+                                        ₹{parseFloat(service.price).toLocaleString()}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2 ml-4">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removePendingAppointment(index)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                <div className="font-semibold text-gray-900 dark:text-white">
+                                  ₹{appointment.total.toLocaleString()}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex flex-col justify-between items-end">
-                              <button
-                                type="button"
-                                onClick={() => removePendingAppointment(index)}
-                                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
-                              >
-                                Remove
-                              </button>
-                              <p className="font-medium text-gray-700 dark:text-gray-300">
-                                Total: ₹{appointment.total.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       ))}
-                      <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <p className="font-medium text-gray-700 dark:text-gray-300">Total for all appointments</p>
-                        <p className="font-bold text-gray-800 dark:text-white">₹{calculateTotal().toLocaleString()}</p>
-                      </div>
+                      <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                        <CardContent className="pt-4">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-900 dark:text-white">Total for all appointments</span>
+                            <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                              ₹{calculateTotal().toLocaleString()}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 )}
               </form>
-            </div>
+              </CardContent>
+            </Card>
             
             {/* BLOCK 2: Staff Availability */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-                Staff Availability for {new Date(selectedDate).toLocaleDateString()}
-              </h2>
-              
-              
-              
-              <BookingStaffAvailability
-                staff={staff}
-                staffAvailability={staffAvailability}
-                selectedDate={selectedDate}
-                selectedStaff={selectedStaff}
-                setSelectedStaff={setSelectedStaff}
-                selectedTime={selectedTime}
-                setSelectedTime={setSelectedTime}
-                selectedDuration={selectedDuration}
-                setSelectedDuration={setSelectedDuration}
-                getAvailableTimeSlots={getAvailableTimeSlots}
-                canFitDuration={canFitDuration}
-                formatTime={formatTime}
-                formatDuration={formatDuration}
-                getEndTimeFromDuration={getEndTimeFromDuration}
-                bookedAppointments={bookedAppointments}
-              />
-            </div>
-            
+            <Card>
+              <CardHeader>
+                <CardTitle>Staff Availability</CardTitle>
+                <CardDescription>
+                  {new Date(selectedDate).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BookingStaffAvailability
+                  staff={staff}
+                  staffAvailability={staffAvailability}
+                  selectedDate={selectedDate}
+                  selectedStaff={selectedStaff}
+                  setSelectedStaff={setSelectedStaff}
+                  selectedTime={selectedTime}
+                  setSelectedTime={setSelectedTime}
+                  selectedDuration={selectedDuration}
+                  setSelectedDuration={setSelectedDuration}
+                  getAvailableTimeSlots={getAvailableTimeSlots}
+                  canFitDuration={canFitDuration}
+                  formatTime={formatTime}
+                  formatDuration={formatDuration}
+                  getEndTimeFromDuration={getEndTimeFromDuration}
+                  bookedAppointments={bookedAppointments}
+                />
+              </CardContent>
+            </Card>
+
             {/* Book Appointment Button at bottom of page */}
             <div className="mt-8 flex justify-center">
-              <button 
+              <Button
+                size="lg"
                 onClick={handleSubmit}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 text-lg"
                 disabled={loading || (pendingAppointments.length === 0 && selectedServices.length === 0)}
+                className="w-full sm:w-auto px-8"
               >
                 {loading ? 'Booking...' : 'Book Appointment'}
-              </button>
+              </Button>
             </div>
           </>
         )}
